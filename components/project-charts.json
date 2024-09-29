@@ -1,0 +1,112 @@
+[
+    {
+      "project_id": 1,
+      "project_name": "National Data Analytics Platform (NDAP) Monitoring Dashboard",
+      "country_of_project": "India",
+      "company": "IDinsight",
+      "start": "May 2022",
+      "end": "Aug 2022",
+      "skills": ["Redshift", "Superset", "AWS", "Python", "SQL"],
+      "broader_categories": ["Data Engineering", "Dashboarding", "Software Engineering / Big Data"]
+    },
+    {
+      "project_id": 2,
+      "project_name": "Social Cash Transfer Programme (SCTP) Monitoring Dashboard",
+      "country_of_project": "Malawi",
+      "company": "IDinsight",
+      "start": "Feb 2023",
+      "end": "Apr 2023",
+      "skills": ["Google Data Studio", "Python"],
+      "broader_categories": ["Dashboarding", "Software Engineering / Big Data"]
+    },
+    {
+      "project_id": 3,
+      "project_name": "Indus Action Eligibility Algorithm Development",
+      "country_of_project": "India",
+      "company": "IDinsight",
+      "start": "Apr 2022",
+      "end": "Nov 2022",
+      "skills": ["Redshift", "Glue", "Athena", "Python", "Superset", "Terraform"],
+      "broader_categories": ["Data Engineering", "Software Engineering / Big Data", "DevOps / MLOps"]
+    },
+    {
+      "project_id": 4,
+      "project_name": "Praekelt Data API Development",
+      "country_of_project": "South Africa",
+      "company": "IDinsight",
+      "start": "Aug 2022",
+      "end": "Sept 2022",
+      "skills": ["FastAPI", "SQL", "Python"],
+      "broader_categories": ["Software Engineering / Big Data"]
+    },
+    {
+      "project_id": 5,
+      "project_name": "Aspirational Districts Programme (ADP)",
+      "country_of_project": "India",
+      "company": "IDinsight",
+      "start": "Jan 2023",
+      "end": "Sept 2023",
+      "skills": ["AWS Lambda", "AWS Step Functions", "AWS Lambda", "Python"],
+      "broader_categories": ["Software Engineering / Big Data", "Data Engineering"]
+    },
+    {
+      "project_id": 6,
+      "project_name": "Kidogo Monitoring System",
+      "country_of_project": "Kenya",
+      "company": "IDinsight",
+      "start": "Jan 2022",
+      "end": "Mar 2022",
+      "skills": ["Hevo", "BigQuery", "GCP", "Python"],
+      "broader_categories": ["Data Engineering", "Dashboarding", "Software Engineering / Big Data"]
+    },
+    {
+      "project_id": 7,
+      "project_name": "Surveystream Regression Test Suite",
+      "country_of_project": "IDinsight Product",
+      "company": "IDinsight",
+      "start": "Jan 2023",
+      "end": "May 2024",
+      "skills": ["Cypress", "Airflow", "Python", "SQL", "Email Pipelines"],
+      "broader_categories": ["DevOps / MLOps", "Software Engineering / Big Data"]
+    },
+    {
+      "project_id": 8,
+      "project_name": "Satellite Imagery (MOSAIKS)",
+      "country_of_project": "IDinsight Project",
+      "company": "IDinsight",
+      "start": "Jul 2023",
+      "end": "Jul 2023",
+      "skills": ["Dask", "Grid Sampling", "Python"],
+      "broader_categories": ["Software Engineering / Big Data", "Data Engineering"]
+    },
+    {
+      "project_id": 9,
+      "project_name": "Bharat Petroleum Corporation Limited",
+      "country_of_project": "India",
+      "company": "Lentra.ai",
+      "start": "Oct 2020",
+      "end": "Dec 2021",
+      "skills": ["Postman", "PowerBI", "Azure Data Factory", "Runbooks", "Python"],
+      "broader_categories": ["Software Engineering / Big Data", "Data Engineering", "DevOps / MLOps"]
+    },
+    {
+      "project_id": 10,
+      "project_name": "Hollard and Blue Zebra - Australian Insurance Groups",
+      "country_of_project": "Australia",
+      "company": "Xceedance",
+      "start": "Jan 2020",
+      "end": "Jun 2020",
+      "skills": ["Azure DevOps", "MySQL", "Selenium", "Python"],
+      "broader_categories": ["Software Engineering / Big Data", "DevOps / MLOps"]
+    },
+    {
+      "project_id": 11,
+      "project_name": "Clinical Data Automation",
+      "country_of_project": "India",
+      "company": "Alpha Nodus",
+      "start": "May 2019",
+      "end": "Jul 2019",
+      "skills": ["Tableau", "PostgreSQL", "Python", "Pandas", "NumPy"],
+      "broader_categories": ["Data Engineering", "Data Science methods", "Dashboarding"]
+    }
+]
