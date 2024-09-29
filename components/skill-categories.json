@@ -1,0 +1,60 @@
+{
+    "Software Engineering / Big Data": [
+      "Unit Testing",
+      "Git",
+      "Spark",
+      "Dask / Modin / Ray",
+      "Flask",
+      "Django",
+      "FastAPI",
+      "Node.js",
+      "React.js"
+    ],
+    "Data Science methods": [
+      "Bayesian models/probabilistic programming (Stan, pymc3)",
+      "NLP - Deeplearning models (LSTM, Transformers)",
+      "Computer vision (CNNs)",
+      "Constrained/non-convex Optimisation (solvers, genetic algorithms)",
+      "EthicalAI",
+      "Geospatial analysis (ArcGIS, QGIS)",
+      "Causal Inference / Econometrics",
+      "Graph theory/network analysis"
+    ],
+    "Dashboarding": [
+      "Streamlit",
+      "Shiny",
+      "Dash",
+      "Superset",
+      "Tableau",
+      "PowerBI",
+      "Looker",
+      "QlikSense"
+    ],
+    "Data visualisation": [
+      "D3.js",
+      "plotly / bokeh",
+      "altair / vega"
+    ],
+    "DevOps / MLOps": [
+      "Pipelining frameworks (Prefect, Kedro, Luigi)",
+      "Docker",
+      "Kubernetes",
+      "AWS stack",
+      "GCP stack",
+      "Azure stack",
+      "CI/CD (Github Actions, Travis, Circle, Jenkins)",
+      "Grafana / Prometheus",
+      "Infrastructure as code (Terraform, Pulumi)"
+    ],
+    "Data Engineering": [
+      "Orchestration (Apache Airflow)",
+      "Pipelining (dbt, Fivetran)",
+      "Streaming data (Kafka, Spark streaming)",
+      "Metadata management (Apache Atlas)",
+      "Files (Parquet, Avro)",
+      "Analytics databases (BigQuery, Redshift)",
+      "Cassandra",
+      "NoSQL (MongoDB)"
+    ]
+  }
+  
