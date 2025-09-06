@@ -1,58 +1,353 @@
-import React, { useState, useEffect } from 'react'
+'use client'
 
-import { PriceHistoryChart } from "@/components/particle-line-chart"
-import { TypewriterEffect } from "@/components/typewriter-effect"
-import { Background } from "@/components/tsparticle-component"
-import TSParticlesSVG from "@/components/tsparticle-chart"
-import { FullScreen } from '@tsparticles/engine'
-import { px } from 'framer-motion'
-
-export function TypewriterEffectSmooth() {
-  const words = [
-    {
-      text: "Hi,",
-    },
-    {
-      text: "I'm",
-    },
-    {
-      text: "Yashi!",
-    },
-    {
-      text: "A",
-    },
-    {
-      text: "Data",
-      className: "text-blue-500 dark:text-blue-500"
-    },
-    {
-      text: "Engineer",
-      className: "text-blue-500 dark:text-blue-500"
-    },
-  ];
-  return (
-    <div className="flex flex-col items-center justify-center h-[40rem]  ">
-      <TypewriterEffect words={words} />
-    </div>
-  );
-}
+import React, { useState } from 'react'
+import { ArrowRight, Mail, Phone, MapPin, Linkedin, Menu, X } from 'lucide-react'
+import { DraggableGlobe } from '@/components/draggable-globe'
 
 export default function Page() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
   return (
+    <div className="min-h-screen bg-black text-white">
+      {/* Navigation */}
+      <nav className="fixed top-0 w-full bg-black/95 backdrop-blur-sm z-50 border-b border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="font-bold text-xl text-white">YASHI SHUKLA</div>
+
+            {/* Desktop Menu */}
+            <div className="hidden md:flex space-x-8">
+              <a href="#about" className="text-gray-300 hover:text-white transition-colors">About</a>
+              <a href="#services" className="text-gray-300 hover:text-white transition-colors">Services</a>
+              <a href="#work" className="text-gray-300 hover:text-white transition-colors">Work</a>
+              <a href="/projects" className="text-gray-300 hover:text-white transition-colors">Projects</a>
+              <a href="#contact" className="text-gray-300 hover:text-white transition-colors">Contact</a>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              className="md:hidden text-gray-300"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
+
+          {/* Mobile Menu */}
+          {isMenuOpen && (
+            <div className="md:hidden bg-black border-t border-gray-800">
+              <div className="px-2 pt-2 pb-3 space-y-1">
+                <a
+                  href="#about"
+                  className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-900 rounded-md"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  About
+                </a>
+                <a
+                  href="#services"
+                  className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-900 rounded-md"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Services
+                </a>
+                <a
+                  href="#work"
+                  className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-900 rounded-md"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Work
+                </a>
+                <a
+                  href="/projects"
+                  className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-900 rounded-md"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Projects
+                </a>
+                <a
+                  href="#contact"
+                  className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-900 rounded-md"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Contact
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="pt-16 min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
+            Empowering positive change through
+            <span className="block text-gray-300">data, AI & cloud engineering</span>
+          </h1>
+          <p className="text-xl text-gray-400 mb-8 max-w-3xl mx-auto">
+            5+ years building cloud-native data systems, AI/ML workflows, and scalable solutions for governments, nonprofits, and enterprises worldwide.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button className="bg-white text-black px-8 py-3 rounded-lg hover:bg-gray-200 transition-all duration-300 flex items-center justify-center gap-2 font-semibold">
+              View My Work <ArrowRight className="w-5 h-5" />
+            </button>
+            <button className="border border-gray-600 text-gray-300 px-8 py-3 rounded-lg hover:bg-gray-900 hover:text-white transition-all duration-300">
+              Get In Touch
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Statistics Section */}
+      <section className="py-20 bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+            {[
+              { value: '50+', label: 'Global Projects' },
+              { value: '10M+', label: 'Records Processed' },
+              { value: '5+', label: 'Years Experience' }
+            ].map((stat, index) => (
+              <div
+                key={stat.label}
+                className="bg-black p-8 rounded-lg border border-gray-800 hover:border-gray-600 transition-all duration-300 group"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <div className="text-4xl font-bold text-white mb-2 group-hover:scale-110 transition-transform duration-300">
+                  {stat.value}
+                </div>
+                <div className="text-gray-400">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Interactive Globe Section */}
+      <DraggableGlobe />
+
+      {/* About Section */}
+      <section id="about" className="py-20 bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-white mb-4">Who I Am</h2>
+            <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+              Data Engineer & AI Specialist with 5+ years architecting cloud-native systems, LLM workflows, and scalable solutions for governments, nonprofits, and enterprises. Expert in MLOps, GenAI, and delivering data-driven impact at scale.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              {
+                icon: '🤖',
+                title: 'AI & ML Engineering',
+                description: 'Building LLM workflows, GenAI solutions, and MLOps pipelines with Gemini, GPT, and TensorFlow'
+              },
+              {
+                icon: '☁️',
+                title: 'Cloud Architecture',
+                description: 'Designing scalable systems on AWS, GCP, and Azure with serverless and containerized solutions'
+              },
+              {
+                icon: '🌍',
+                title: 'Social Impact',
+                description: 'Delivering data solutions for governments, nonprofits, and social good organizations worldwide'
+              }
+            ].map((item, index) => (
+              <div
+                key={item.title}
+                className="text-center bg-black p-6 rounded-lg border border-gray-800 hover:border-gray-600 transition-all duration-300"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">{item.icon}</span>
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
+                <p className="text-gray-400">{item.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Services Section */}
+      <section id="services" className="py-20 bg-black">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-white mb-4">What I Do</h2>
+            <p className="text-xl text-gray-400">Specialized services to help you harness the power of data</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                title: 'AI & LLM Engineering',
+                description: 'Building production LLM workflows, GenAI solutions, and multimodal AI systems for large-scale data processing.',
+                features: ['Gemini & GPT Integration', 'LLM Fine-tuning & Prompt Engineering', 'Autonomous AI Agents', 'MLOps & Model Deployment']
+              },
+              {
+                title: 'Cloud Data Engineering',
+                description: 'Architecting cloud-native data systems, ETL/ELT pipelines, and scalable infrastructure across AWS, GCP, and Azure.',
+                features: ['Serverless Data Pipelines', 'Data Warehousing (Redshift/BigQuery)', 'Real-time Processing', 'Cost Optimization (<$20/month)']
+              },
+              {
+                title: 'Social Impact Solutions',
+                description: 'Delivering data-driven solutions for governments, nonprofits, and social good organizations to maximize societal impact.',
+                features: ['Government Analytics Platforms', 'Nonprofit Data Systems', 'Policy Impact Measurement', 'Benefit Access Optimization']
+              }
+            ].map((service, index) => (
+              <div
+                key={service.title}
+                className="bg-gray-900 p-8 rounded-lg border border-gray-800 hover:border-gray-600 transition-all duration-300 group"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <h3 className="text-2xl font-semibold text-white mb-4 group-hover:text-gray-200 transition-colors">
+                  {service.title}
+                </h3>
+                <p className="text-gray-400 mb-4">{service.description}</p>
+                <ul className="text-sm text-gray-400 space-y-2">
+                  {service.features.map((feature, featureIndex) => (
+                    <li key={featureIndex} className="flex items-center">
+                      <span className="w-1.5 h-1.5 bg-white rounded-full mr-2 flex-shrink-0"></span>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Work Section */}
+      <section id="work" className="py-20 bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-white mb-4">My Work</h2>
+            <p className="text-xl text-gray-400">A selection of projects that showcase my expertise</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              {
+                title: 'Gemini LLM Pipeline (Gates Foundation)',
+                description: 'Architected GCP pipeline with Google Gemini processing 10M+ PDFs for national survey sampling in India.',
+                technologies: ['Google Gemini', 'GCP', 'Python', 'BigQuery']
+              },
+              {
+                title: 'National Data Analytics Platform (NDAP)',
+                description: 'Led Redshift architecture ingesting terabytes of clickstream data for India\'s government analytics platform.',
+                technologies: ['AWS Redshift', 'Apache Spark', 'Superset', 'Python']
+              },
+              {
+                title: 'SCTP Monitoring Dashboard (UNICEF)',
+                description: 'Built automated data transformation workflows for Malawi government cash transfer program monitoring.',
+                technologies: ['Python', 'Google Data Studio', 'APIs', 'ETL']
+              }
+            ].map((project, index) => (
+              <div
+                key={project.title}
+                className="bg-black p-6 rounded-lg border border-gray-800 hover:border-gray-600 transition-all duration-300 group"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <h3 className="text-xl font-semibold text-white mb-2 group-hover:text-gray-200 transition-colors">
+                  {project.title}
+                </h3>
+                <p className="text-gray-400 mb-4">{project.description}</p>
+                <div className="flex flex-wrap gap-2">
+                  {project.technologies.map((tech) => (
+                    <span
+                      key={tech}
+                      className="bg-gray-800 text-gray-300 text-xs px-2 py-1 rounded hover:bg-gray-700 transition-colors"
+                    >
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+    </div>
+      </section>
+
+      {/* Contact Section */}
+      <section id="contact" className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Get In Touch</h2>
+            <p className="text-xl text-gray-600">Ready to start your next data project?</p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div>
+              <h3 className="text-2xl font-semibold text-gray-900 mb-6">Let&apos;s work together</h3>
+              <p className="text-gray-600 mb-8">
+                I&apos;m always interested in new opportunities and exciting projects.
+                Whether you need help with data engineering, analytics, or cloud solutions,
+                I&apos;d love to hear from you.
+              </p>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Mail className="w-5 h-5 text-blue-600" />
+                  <span className="text-gray-600">yashi@example.com</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Phone className="w-5 h-5 text-blue-600" />
+                  <span className="text-gray-600">+1 (555) 123-4567</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <MapPin className="w-5 h-5 text-blue-600" />
+                  <span className="text-gray-600">San Francisco, CA</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Linkedin className="w-5 h-5 text-blue-600" />
+                  <a href="#" className="text-blue-600 hover:text-blue-700">linkedin.com/in/yashi-shukla</a>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-8 rounded-lg shadow-sm">
+              <form className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
     <div>
-      <TSParticlesSVG
-        // svgPath="M387.548 144.017c3.408.692 6.687.993 7.231 5.868c.277 2.483 3.627 2.737 6.1 2.804c4.436.121 5.596.838 5.332 4.793c-.213 3.194.819 4.139 3.805 4.402c3.932.346 7.616 1.467 11.754-.124c3.724-1.431 5.854.458 7.622 4.943c.375.95.912 2.217 2.022 1.532c5.06-3.122 11.102-.69 16.523-3.445c3.601-1.83 8.732-1.001 12.345 2.471c1.747 1.679 3.82 2.486 5.988 1.01c2.299-1.565 4.203-.125 5.386 1.092c3.758 3.865 8.001 2.716 12.313 1.894c.577-.11 1.136-.318 1.703-.48c2.342-.671.147 4.704 2.772 2.413c1.391-1.214 2.364-1.468 3.937-1.659c7.167-.871 12.452 3.194 17.948 6.797l-2.629 6.175a13.99 13.99 0 0 0-.573-.133c-1.559-.325-2.982-3.053-3.452-2.307c-.972 1.54-2.927 2.857-2.673 5.011c.326 2.764-1.041 3.417-3.489 3.534c-2.18.104-4.407.49-6.095 2.213c-1.375 1.405-3.004 1.433-4.954 1.358c-5.038-.194-7.75 2.198-8.38 7.305c-.647 5.238-5.538 7.118-8.125 10.807c-.836 1.192-1.586-.353-2.035-1.148c-2.053-3.638-.781-7.02 1.05-10.212c.886-1.544 2.31-2.772 3.434-4.189c.682-.859 2.456-1.411 1.648-2.747c-.715-1.182-2.358-1.503-3.782-1.466c-1.779.047-2.983 1.267-3.803 2.652c-1.429 2.414-3.113 2.059-5.589 1.615c-6.455-1.157-13.138-1.834-17.634 4.644c-1.19 1.715-4.873 1.965-3.75 4.75c1.057 2.621 4.312.887 6.517 1.566c1.629.501 3.825-.061 3.898 2.132c.078 2.364 2.484 5.01-.2 7.116c-.833.654-1.585 1.052-1.698 2.165c-.057.561-.038 1.41-.724 1.408c-.649-.002-.578-.84-.645-1.379c-.049-.398-.015-.805-.061-1.204c-.128-1.119.365-2.333-.504-3.34c-.303 1.133-.407 2.373-.944 3.382c-2.557 4.817-5.283 9.367-11.26 10.817c-5.476 1.328-6.02 2.449-4.703 7.979c.48 2.016.491 3.733-1.671 4.446c-2.09.689-2.741-1.252-3.462-2.596c-.556-1.036-.868-2.254-1.049-3.427c-.265-1.718-1.219-1.873-2.558-1.381c-1.042.383-2.148 1.681-3.099.143c-.656-1.061-1.074-1.763-2.021-.432c-.567.797-1.46 1.779-1.349 2.555c.241 1.688 1.493.322 2.307.401c2.327.228 4.52.505 1.462 3.248c-1.387 1.244-.972 2.872-.654 4.496c1.624 8.294-1.931 14.421-9.803 17.233c-1.967.703-4.424.583-5.273 3.356c-.541 1.767-1.349 1.617-2.135-.152c-.95-2.139-2.372-.77-3.438-.024c-1.447 1.014-1.471 2.284-.128 3.501c.596.54 1.234 1.038 1.791 1.615c3.801 3.935 2.463 9.444-2.709 11.499c-1.426.567-1.645-.407-2.216-1.217c-1.553-2.203-4.233-4.803-6.227-2.999c-2.573 2.328.148 5.093 2.195 7.052c1.506 1.441 3.279 3.176 2.897 5.048c-.875 4.282 2.918 6.886 3.159 10.679c.109 1.71 1.756 1.966 3.127 2.346c4.021 1.115 7.765 3.419 12.209 2.726c.764-.119 1.887.188 1.943 1.01c.08 1.166-1.131.83-1.839.894c-5.069.455-10.258-.399-14.817-1.856c-3.515-1.123-6.489-5.166-8.773-8.54a77.322 77.322 0 0 0-6.226-8.029c-.658-.741-1.888-1.209-1.093-2.33c.897-1.264 2.206-.767 3.136.052c1.35 1.189 2.528 2.573 3.795 3.858c.42.426 1.021.892 1.529.463c.596-.502-.042-1.048-.354-1.484c-3.299-4.616-4.536-9.737-4.083-15.38c.169-2.104-.175-4.21-3.297-3.536c-2.686.58-2.615-1.983-3.548-3.303c-3.915-5.54-5.369-5.682-10.398-1.191c-1.155 1.031-2.421 1.938-3.684 2.834c-4.344 3.083-5.489 7.65-3.257 12.72c.457 1.039 1.577 2.189.34 3.241c-1.14.97-2.101-.257-3.187-.628c-5.012-1.713-6.9-5.889-7.589-10.382c-1.027-6.693-6.065-10.562-9.666-15.465c-.924-1.259-2.304-1.525-3.752-1.55c-1.809-.032-3.633-.192-5.424-.017c-1.115.109-2.176-.053-3.222-.282c-1.784-.39-2.842 1.902-1.387 3.005c.694.526 1.447 1.005 2.089 1.575c1.156 1.026-.034 1.648-.37 2.518c-2.124 5.505-7.421 6.922-11.972 9.013c-2.846 1.307-5.541 3.283-8.87 3.479c-.618.036-1.233.361-1.233 1.067c0 .953.754 1.413 1.556 1.485c2.039.184 3.835-.928 5.785-1.239c2.716-.432 4.026 1.41 2.815 3.879c-2.389 4.873-5.461 9.368-9.861 12.794c-6.738 5.247-7.38 7.39-4.853 15.249c1.98 6.159 1.748 7.088-3.623 11.162c-2.049 1.555-3.805 2.98-2.786 5.923c.403 1.164.502 2.755-.462 3.42c-3.853 2.661-5.114 7.087-7.533 10.687c-3.889 5.787-9.849 5.509-15.583 5.945c-1.797.137-3.152-1.645-3.334-3.038c-.656-5.013-3.142-9.576-4.865-13.997c-2.651-6.803-4.64-12.668-1.984-19.841c.762-2.059-.242-5.46-1.597-7.46c-2.27-3.351-3.349-6.727-3.244-10.669c.033-1.256-.65-2.82-1.916-2.636c-3.452.502-6.252-2.678-9.144-2.027c-3.245.731-6.798.092-9.78 1.947c-2.003 1.246-3.775.745-5.599-.454c-4.58-3.01-7.175-7.934-11.171-11.506c-.419-.375-.672-1.111-.572-1.664c1.374-7.608-1.254-16.357 5.925-22.326c3.49-2.902 4.868-7.349 8.226-10.323c1.41-1.249 1.475-2.94-.668-3.776c-1.429-.558-2.919-1.361-2.454-2.904c.775-2.571-.717-5.281.586-7.634c1.17-2.111 3.442-1.728 5.432-1.622c5.931.316 6.473-.139 5.419-6.187c-.446-2.562.164-3.757 2.353-5.341c2.539-1.838 4.965-3.975 7.546-5.798c4.152-2.934 4.621-4.074 1.656-8.53c-.928-1.394-1.53-2.758-1.896-4.328c-1.018-4.374-.332-6.256 3.797-8.196c2.881-1.353 5.041-3.124 6.308-6.083c2.201-5.141 6.441-8.055 11.46-9.987c2.06-.793 4.212-1.346 6.286-2.107c3.695-1.356 6.851-1.983 10.201 1.562c2.205 2.333 6.412 1.974 9.331 3.866c.992.644 2.534.755 3.155 1.601c2.43 3.307 4.211 5.019 5.591-.702c.317-1.313 2.416-1.751 3.548-.403c1.72 2.049 3.269 1.569 5.221.442c3.274-1.89 7.072-.932 10.598-1.619c3.742-.729 1.287-2.342.805-3.733l.067-.083c2.944.603 5.874 1.29 8.837 1.774c1.568.256 2.673.294 3.16-2.161c1.057-5.329 3.45-6.334 9.301-5.783c2.094.197 4.118-.164 6.239.773c1.225.541 3.422.303 3.762-1.873c.474-3.035 2.025-2.644 4.311-1.974c2.114.619 4.999 1.678 4.969-2.589c-.008-1.118 1.374-1.322 2.345-1.534c4.265-.93 8.243-2.888 12.841-2.683c4.222.188 5.361-2.615 3.092-6.64c1.244-.986 1.96-2.349 2.629-3.746zm-135.297 83.107c-4.451.786-7.471 3.471-9.284 7.34c-.886 1.891-1.658 3.587-3.617 4.518c-.653.31-1.977.132-1.817.984c.125.664 1.461.525 2.177.275c3.588-1.251 7.159-2.422 11.005-2.756c2.101-.183 3.987.119 5.818.957c1.8.824 1.569 2.526 1.668 4.142c.078 1.256 1.061 2.303 2.318 2.368c4.028.207 7.866 3.622 12.133.646c.658-.459 2.089-.364 2.891.029c4.438 2.179 9.185.667 13.746 1.294c2.234.307 3.028-1.88 3.456-3.502c.523-1.984-1.087-2.024-2.632-2.131c-1.338-.093-2.726-1.213-3.942-1.005c-4.188.716-6.032-1.023-6.297-5.043c-.053-.812-.546-1.586-1.555-1.447c-.679.094-.62.839-.877 1.333c-1.483 2.854-5.322 3.344-7.158.916c-.557-.736-.606-2.689-1.415-2.283c-4.169 2.092-6.013-1.779-8.791-3.123c-1.824-.883-2.958-1.207-3.141 1.441c-.097 1.409-.885 3.188-2.474 2.72c-2.283-.672-.257-2.255-.159-3.45c.151-1.791 1.447-4.175-2.053-4.223zm15.908-21.938c2.779.145 2.549-.001 3.678-1.78c2.651-4.179 1.6-8.31.216-12.472c-.389-1.171-.234-3.334-2.38-2.569c-1.634.583-2.657 2.485-1.598 3.924c3.579 4.868-1.13 7.218-3.056 10.162c-1.204 1.841-3.624 3.708-5.668.231c-.299-.509-.988-.921-1.472-.441c-.347.344-.485 1.127-.388 1.654c.638 3.454 3.359 2.718 5.685 2.724c1.794.005 2.931-2.307 4.983-1.433zm33.065 24.301c-.848-3.305-5.536-3.019-6.229-6.811c-.158-.865-1.34 1.328-2.181 1.964c-1.332 1.007-2.677 1.308-3.502-.348c-.675-1.355-1.401-2.169-2.575-.932c-1.342 1.414-2.931 2.874-2.673 5.157c.164 1.451 1.28 2.279 2.506 2.012c3.848-.838 7.412-.3 11.045 1.13c1.522.598 3.189-.12 3.609-2.172zm-3.793 31.371c-1.259.272-1.308 1.187-1.374 2.188c-.194 2.918 1.904 4.615 3.447 6.602c.7.901 1.419 2.512 2.576 2.019c1.67-.712.618-2.352.302-3.59c-.599-2.352-2.333-4.072-3.548-6.08c-.278-.462-.88-.728-1.403-1.139z"
-        // svgPath='M13.0607,16.0607 C12.4749,16.6465 11.5251,16.6465 10.9393,16.0607 L5.28249,10.4038 C4.6967,9.81804 4.6967,8.86829 5.28248,8.2825 C5.86827,7.69672 6.81802,7.69672 7.40381,8.2825 L12,12.8787 L16.5962,8.2825 C17.182,7.69672 18.1317,7.69672 18.7175,8.2825 C19.3033,8.86829 19.3033,9.81804 18.7175,10.4038 L13.0607,16.0607 Z'
-        svgPath='M0,100 Q50,0 100,100 T200,100'
-        // width={2500}
-        // height={2500}
-        color="#6b7280"
-        // particleSize={2}
-        particleCount={200}
-      />
-      {/* <Background /> */}
-      <TypewriterEffectSmooth />
-      {/* <PriceHistoryChart /> */}
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <input
+                    type="email"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                  <textarea
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  ></textarea>
+                </div>
+                <button
+                  type="submit"
+                  className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  Send Message
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p>&copy; 2024 Yashi Shukla. All rights reserved.</p>
+        </div>
+      </footer>
     </div>
   )
 }
