@@ -1,0 +1,47 @@
+country_code,country_name,iso_a2,iso_a3,flag_url,region,subregion
+AF,Afghanistan,AF,AFG,https://flagcdn.com/af.svg,Asia,Southern Asia
+AL,Albania,AL,ALB,https://flagcdn.com/al.svg,Europe,Southern Europe
+DZ,Algeria,DZ,DZA,https://flagcdn.com/dz.svg,Africa,Northern Africa
+AO,Angola,AO,AGO,https://flagcdn.com/ao.svg,Africa,Middle Africa
+AR,Argentina,AR,ARG,https://flagcdn.com/ar.svg,Americas,South America
+AU,Australia,AU,AUS,https://flagcdn.com/au.svg,Oceania,Australia and New Zealand
+AT,Austria,AT,AUT,https://flagcdn.com/at.svg,Europe,Western Europe
+BD,Bangladesh,BD,BGD,https://flagcdn.com/bd.svg,Asia,Southern Asia
+BE,Belgium,BE,BEL,https://flagcdn.com/be.svg,Europe,Western Europe
+BR,Brazil,BR,BRA,https://flagcdn.com/br.svg,Americas,South America
+CA,Canada,CA,CAN,https://flagcdn.com/ca.svg,Americas,Northern America
+CN,China,CN,CHN,https://flagcdn.com/cn.svg,Asia,Eastern Asia
+CO,Colombia,CO,COL,https://flagcdn.com/co.svg,Americas,South America
+DE,Germany,DE,DEU,https://flagcdn.com/de.svg,Europe,Western Europe
+EG,Egypt,EG,EGY,https://flagcdn.com/eg.svg,Africa,Northern Africa
+FR,France,FR,FRA,https://flagcdn.com/fr.svg,Europe,Western Europe
+GB,United Kingdom,GB,GBR,https://flagcdn.com/gb.svg,Europe,Northern Europe
+IN,India,IN,IND,https://flagcdn.com/in.svg,Asia,Southern Asia
+ID,Indonesia,ID,IDN,https://flagcdn.com/id.svg,Asia,South-Eastern Asia
+IR,Iran,IR,IRN,https://flagcdn.com/ir.svg,Asia,Southern Asia
+IQ,Iraq,IQ,IRQ,https://flagcdn.com/iq.svg,Asia,Western Asia
+IT,Italy,IT,ITA,https://flagcdn.com/it.svg,Europe,Southern Europe
+JP,Japan,JP,JPN,https://flagcdn.com/jp.svg,Asia,Eastern Asia
+KE,Kenya,KE,KEN,https://flagcdn.com/ke.svg,Africa,Eastern Africa
+KR,South Korea,KR,KOR,https://flagcdn.com/kr.svg,Asia,Eastern Asia
+MW,Malawi,MW,MWI,https://flagcdn.com/mw.svg,Africa,Eastern Africa
+MX,Mexico,MX,MEX,https://flagcdn.com/mx.svg,Americas,Central America
+MY,Malaysia,MY,MYS,https://flagcdn.com/my.svg,Asia,South-Eastern Asia
+NL,Netherlands,NL,NLD,https://flagcdn.com/nl.svg,Europe,Western Europe
+NO,Norway,NO,NOR,https://flagcdn.com/no.svg,Europe,Northern Europe
+PE,Peru,PE,PER,https://flagcdn.com/pe.svg,Americas,South America
+PH,Philippines,PH,PHL,https://flagcdn.com/ph.svg,Asia,South-Eastern Asia
+PL,Poland,PL,POL,https://flagcdn.com/pl.svg,Europe,Eastern Europe
+PT,Portugal,PT,PRT,https://flagcdn.com/pt.svg,Europe,Southern Europe
+RO,Romania,RO,ROU,https://flagcdn.com/ro.svg,Europe,Eastern Europe
+RU,Russia,RU,RUS,https://flagcdn.com/ru.svg,Europe,Eastern Europe
+SA,Saudi Arabia,SA,SAU,https://flagcdn.com/sa.svg,Asia,Western Asia
+SE,Sweden,SE,SWE,https://flagcdn.com/se.svg,Europe,Northern Europe
+SG,Singapore,SG,SGP,https://flagcdn.com/sg.svg,Asia,South-Eastern Asia
+ZA,South Africa,ZA,ZAF,https://flagcdn.com/za.svg,Africa,Southern Africa
+ES,Spain,ES,ESP,https://flagcdn.com/es.svg,Europe,Southern Europe
+TH,Thailand,TH,THA,https://flagcdn.com/th.svg,Asia,South-Eastern Asia
+TR,Turkey,TR,TUR,https://flagcdn.com/tr.svg,Asia,Western Asia
+UA,Ukraine,UA,UKR,https://flagcdn.com/ua.svg,Europe,Eastern Europe
+US,United States,US,USA,https://flagcdn.com/us.svg,Americas,Northern America
+VN,Vietnam,VN,VNM,https://flagcdn.com/vn.svg,Asia,South-Eastern Asia
