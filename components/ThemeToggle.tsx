@@ -1,26 +1,70 @@
 'use client'
 
-import { useTheme } from '@/contexts/ThemeContext'
+import { useCallback, useRef } from 'react'
 import { Moon, Sun } from 'lucide-react'
+import { flushSync } from 'react-dom'
+import { useTheme } from '@/contexts/ThemeContext'
 
-export function ThemeToggle() {
+interface ThemeToggleProps {
+  className?: string
+  duration?: number
+}
+
+export function ThemeToggle({ className, duration = 500 }: ThemeToggleProps) {
   const { theme, toggleTheme } = useTheme()
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const isDark = theme === 'dark'
+
+  const handleToggle = useCallback(async () => {
+    // Fallback for browsers without View Transitions API
+    if (!document.startViewTransition || !buttonRef.current) {
+      toggleTheme()
+      return
+    }
+
+    const transition = document.startViewTransition(() => {
+      flushSync(() => {
+        toggleTheme()
+      })
+    })
+
+    await transition.ready
+
+    const { top, left, width, height } = buttonRef.current.getBoundingClientRect()
+    const x = left + width / 2
+    const y = top + height / 2
+    const maxRadius = Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y)
+    )
+
+    document.documentElement.animate(
+      {
+        clipPath: [
+          `circle(0px at ${x}px ${y}px)`,
+          `circle(${maxRadius}px at ${x}px ${y}px)`,
+        ],
+      },
+      {
+        duration,
+        easing: 'ease-in-out',
+        pseudoElement: '::view-transition-new(root)',
+      }
+    )
+  }, [toggleTheme, duration])
 
   return (
     <button
-      onClick={toggleTheme}
-      className="p-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+      ref={buttonRef}
+      onClick={handleToggle}
+      className={`relative w-10 h-10 rounded-full border border-border bg-background hover:bg-muted transition-colors flex items-center justify-center ${className || ''}`}
       aria-label="Toggle theme"
     >
-      {theme === 'dark' ? (
-        <Sun className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+      {isDark ? (
+        <Sun className="w-[18px] h-[18px] text-foreground" />
       ) : (
-        <Moon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+        <Moon className="w-[18px] h-[18px] text-foreground" />
       )}
     </button>
   )
 }
-
-
-
-

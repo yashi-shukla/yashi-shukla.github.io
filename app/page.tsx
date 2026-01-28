@@ -1,353 +1,502 @@
 'use client'
 
-import React, { useState } from 'react'
-import { ArrowRight, Mail, Phone, MapPin, Linkedin, Menu, X } from 'lucide-react'
+import React, { useState, useEffect, useRef } from 'react'
+import { ArrowRight, Mail, MapPin, Linkedin, Github, Menu, X, ChevronDown } from 'lucide-react'
 import { DraggableGlobe } from '@/components/draggable-globe'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
+import { NumberTicker } from '@/components/ui/number-ticker'
+import { STATS, PROJECTS } from '@/lib/constants'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger)
+}
 
 export default function Page() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const mainRef = useRef<HTMLDivElement>(null)
+
+  // Initialize GSAP animations
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      // Hero text reveal with stagger
+      gsap.from('.hero-line', {
+        y: 60,
+        opacity: 0,
+        duration: 1,
+        stagger: 0.15,
+        ease: 'power3.out',
+        delay: 0.3,
+      })
+
+      // Scroll indicator
+      gsap.from('.scroll-cta', {
+        opacity: 0,
+        y: -20,
+        duration: 0.8,
+        delay: 1.2,
+        ease: 'power2.out',
+      })
+
+      // Stats counter animation - use fromTo to avoid layout issues
+      ScrollTrigger.batch('.stat-card', {
+        onEnter: (elements) => {
+          gsap.fromTo(elements,
+            {
+              y: 40,
+              opacity: 0,
+            },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.8,
+              stagger: 0.1,
+              ease: 'power3.out',
+              clearProps: 'transform,opacity',
+            }
+          )
+        },
+        start: 'top 85%',
+        once: true,
+      })
+
+      // Section titles - use fromTo to avoid layout issues
+      gsap.utils.toArray('.section-reveal').forEach((el) => {
+        gsap.fromTo(el as Element,
+          {
+            y: 40,
+            opacity: 0,
+          },
+          {
+            scrollTrigger: {
+              trigger: el as Element,
+              start: 'top 85%',
+              once: true,
+            },
+            y: 0,
+            opacity: 1,
+            duration: 0.8,
+            ease: 'power3.out',
+            clearProps: 'transform,opacity',
+          }
+        )
+      })
+
+      // Cards with stagger - use fromTo to avoid layout issues
+      ScrollTrigger.batch('.card-reveal', {
+        onEnter: (elements) => {
+          gsap.fromTo(elements,
+            {
+              y: 50,
+              opacity: 0,
+            },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.8,
+              stagger: 0.12,
+              ease: 'power3.out',
+              clearProps: 'transform,opacity',
+            }
+          )
+        },
+        start: 'top 85%',
+        once: true,
+      })
+    }, mainRef)
+
+    return () => ctx.revert()
+  }, [])
+
+  const scrollToExplore = () => {
+    document.getElementById('explore')?.scrollIntoView({ behavior: 'smooth' })
+  }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black text-gray-900 dark:text-white">
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full bg-white/95 dark:bg-black/95 backdrop-blur-sm z-50 border-b border-gray-200 dark:border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="font-bold text-xl text-gray-900 dark:text-white">YASHI SHUKLA</div>
+    <div ref={mainRef} className="min-h-screen bg-background text-foreground">
+      {/* Navigation - Minimal */}
+      <nav className="fixed top-0 w-full bg-background/80 backdrop-blur-md z-50 border-b border-border/40">
+        <div className="container-custom">
+          <div className="flex justify-between items-center h-14">
+            <a href="/" className="tracking-tight text-lg font-medium" style={{ fontFamily: 'var(--font-display), Georgia, serif' }}>
+              Yashi Shukla
+            </a>
 
             {/* Desktop Menu */}
-            <div className="hidden md:flex items-center space-x-8">
-              <a href="#about" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">About</a>
-              <a href="#services" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">Services</a>
-              <a href="#work" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">Work</a>
-              <a href="/projects" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">Projects</a>
-              <a href="#contact" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">Contact</a>
+            <div className="hidden md:flex items-center gap-8">
+              {['About', 'Work', 'Projects', 'Contact'].map((item) => (
+                <a
+                  key={item}
+                  href={item === 'Projects' ? '/projects' : `#${item.toLowerCase()}`}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors animated-underline"
+                >
+                  {item}
+                </a>
+              ))}
               <ThemeToggle />
             </div>
 
-            {/* Mobile Menu Button & Theme Toggle */}
-            <div className="md:hidden flex items-center gap-2">
+            {/* Mobile */}
+            <div className="md:hidden flex items-center gap-3">
               <ThemeToggle />
               <button
-                className="text-gray-600 dark:text-gray-300"
+                className="text-muted-foreground hover:text-foreground"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
               >
-                {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
             </div>
           </div>
 
-          {/* Mobile Menu */}
           {isMenuOpen && (
-            <div className="md:hidden bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800">
-              <div className="px-2 pt-2 pb-3 space-y-1">
+            <div className="md:hidden border-t border-border/40 py-4 space-y-3">
+              {['About', 'Work', 'Projects', 'Contact'].map((item) => (
                 <a
-                  href="#about"
-                  className="block px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-900 rounded-md"
+                  key={item}
+                  href={item === 'Projects' ? '/projects' : `#${item.toLowerCase()}`}
+                  className="block text-sm text-muted-foreground hover:text-foreground py-2"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  About
+                  {item}
                 </a>
-                <a
-                  href="#services"
-                  className="block px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-900 rounded-md"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Services
-                </a>
-                <a
-                  href="#work"
-                  className="block px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-900 rounded-md"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Work
-                </a>
-                <a
-                  href="/projects"
-                  className="block px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-900 rounded-md"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Projects
-                </a>
-                <a
-                  href="#contact"
-                  className="block px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-900 rounded-md"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Contact
-                </a>
-              </div>
+              ))}
             </div>
           )}
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="pt-16 min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-5xl md:text-7xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
-            Empowering positive change through
-            <span className="block text-gray-700 dark:text-gray-300">data, AI & cloud engineering</span>
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-3xl mx-auto">
-            5+ years building cloud-native data systems, AI/ML workflows, and scalable solutions for governments, nonprofits, and enterprises worldwide.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-gray-900 dark:bg-white text-white dark:text-black px-8 py-3 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-all duration-300 flex items-center justify-center gap-2 font-semibold">
-              View My Work <ArrowRight className="w-5 h-5" />
-            </button>
-            <button className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-8 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-white transition-all duration-300">
-              Get In Touch
-            </button>
+      {/* Hero - Minimal, points to globe */}
+      <section className="min-h-screen flex flex-col justify-center relative pt-14">
+        <div className="container-custom py-20 lg:py-32">
+          <div className="max-w-4xl">
+            {/* Role badge */}
+            <div className="hero-line mb-8">
+              <Badge variant="outline" className="text-xs tracking-wider">
+                Data Engineer & AI Specialist
+              </Badge>
+            </div>
+
+            {/* Main headline - Serif */}
+            <h1 className="hero-title text-fluid-display text-foreground mb-6">
+              <span className="hero-line block">Empowering positive</span>
+              <span className="hero-line block">change through</span>
+              <span className="hero-line block text-muted-foreground">data & AI</span>
+            </h1>
+
+            {/* Subtitle */}
+            <p className="hero-line text-fluid-lg text-muted-foreground max-w-xl mb-10 leading-relaxed">
+              Building cloud-native systems, LLM workflows, and analytics solutions
+              for governments and global development organizations.
+            </p>
+
           </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <div className="scroll-cta absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 cursor-pointer" onClick={scrollToExplore}>
+          <span className="text-xs text-muted-foreground tracking-wider uppercase">Scroll to explore</span>
+          <ChevronDown className="w-5 h-5 text-muted-foreground scroll-indicator" />
         </div>
       </section>
 
-      {/* Statistics Section */}
-      <section className="py-20 bg-gray-100 dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            {[
-              { value: '50+', label: 'Global Projects' },
-              { value: '10M+', label: 'Records Processed' },
-              { value: '5+', label: 'Years Experience' }
-            ].map((stat, index) => (
-              <div
-                key={stat.label}
-                className="bg-white dark:bg-black p-8 rounded-lg border border-gray-200 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-600 transition-all duration-300 group"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="text-4xl font-bold text-gray-900 dark:text-white mb-2 group-hover:scale-110 transition-transform duration-300">
-                  {stat.value}
-                </div>
-                <div className="text-gray-600 dark:text-gray-400">{stat.label}</div>
-              </div>
-            ))}
+      {/* Screen 2: Stats + Globe — one cohesive section */}
+      <section id="explore" className="bg-muted/30">
+        {/* Stats row */}
+        <div className="container-custom pt-16 pb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+            <Card className="stat-card card-3d text-center border-0 shadow-sm flex flex-col justify-center">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-4xl lg:text-5xl font-normal tracking-tight">
+                  <NumberTicker value={STATS.totalProjects} />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Projects Delivered</p>
+              </CardContent>
+            </Card>
+            <Card className="stat-card card-3d text-center border-0 shadow-sm flex flex-col justify-center">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-4xl lg:text-5xl font-normal tracking-tight">
+                  <NumberTicker value={10} suffix="M+" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Records Processed</p>
+              </CardContent>
+            </Card>
+            <Card className="stat-card card-3d text-center border-0 shadow-sm flex flex-col justify-center">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-4xl lg:text-5xl font-normal tracking-tight">
+                  <NumberTicker value={STATS.yearsExperience} suffix="+" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Years Experience</p>
+              </CardContent>
+            </Card>
+            <Card className="stat-card card-3d text-center border-0 shadow-sm flex flex-col justify-center">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-4xl lg:text-5xl font-normal tracking-tight">
+                  <NumberTicker value={STATS.cloudPlatforms} />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Cloud Platforms</p>
+              </CardContent>
+            </Card>
           </div>
+        </div>
+
+        {/* Globe */}
+        <div id="globe" className="relative pb-8">
+          <DraggableGlobe showFilters={false} />
         </div>
       </section>
 
-      {/* Interactive Globe Section */}
-      <DraggableGlobe />
-
-      {/* About Section */}
-      <section id="about" className="py-20 bg-white dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">Who I Am</h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-              Data Engineer & AI Specialist with 5+ years architecting cloud-native systems, LLM workflows, and scalable solutions for governments, nonprofits, and enterprises. Expert in MLOps, GenAI, and delivering data-driven impact at scale.
+      {/* Screen 3: About */}
+      <section id="about" className="section-padding bg-background">
+        <div className="container-custom">
+          <div className="section-reveal text-center mb-16">
+            <Badge variant="outline" className="mb-4">About</Badge>
+            <h2 className="section-title text-fluid-2xl text-foreground mb-6">
+              Who Am I
+            </h2>
+            <p className="text-fluid-base text-muted-foreground max-w-2xl mx-auto">
+              Currently at the World Bank Group, previously at IDinsight. I specialize in
+              transforming complex data challenges into scalable, impactful solutions.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
             {[
               {
-                icon: '🤖',
-                title: 'AI & ML Engineering',
-                description: 'Building LLM workflows, GenAI solutions, and MLOps pipelines with Gemini, GPT, and TensorFlow'
+                title: 'AI & LLM Engineering',
+                desc: 'Building autonomous agents with Gemini and GPT. Prompt engineering, multimodal processing, and MLOps for production.'
               },
               {
-                icon: '☁️',
                 title: 'Cloud Architecture',
-                description: 'Designing scalable systems on AWS, GCP, and Azure with serverless and containerized solutions'
+                desc: 'Designing systems on AWS, GCP, and Azure. Expert in Redshift, BigQuery, Spark, and cost-optimized serverless.'
               },
               {
-                icon: '🌍',
                 title: 'Social Impact',
-                description: 'Delivering data solutions for governments, nonprofits, and social good organizations worldwide'
+                desc: 'Data solutions for governments and nonprofits across India, Africa, and globally. Making data accessible and actionable.'
               }
-            ].map((item, index) => (
-              <div
-                key={item.title}
-                className="text-center bg-gray-50 dark:bg-black p-6 rounded-lg border border-gray-200 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-600 transition-all duration-300"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="w-16 h-16 bg-gray-200 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">{item.icon}</span>
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">{item.title}</h3>
-                <p className="text-gray-600 dark:text-gray-400">{item.description}</p>
-              </div>
+            ].map((item) => (
+              <Card key={item.title} className="card-reveal card-3d border-0 shadow-sm flex flex-col">
+                <CardHeader>
+                  <CardTitle className="text-xl">{item.title}</CardTitle>
+                </CardHeader>
+                <CardContent className="flex-1">
+                  <CardDescription className="leading-relaxed">{item.desc}</CardDescription>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Services & Work Section - Merged */}
-      <section id="services" className="py-20 bg-gray-100 dark:bg-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Services */}
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">What I Do</h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400">Specialized services to help you harness the power of data</p>
+      <Separator />
+
+      {/* Work Section */}
+      <section id="work" className="section-padding bg-background">
+        <div className="container-custom">
+          <div className="section-reveal text-center mb-16">
+            <Badge variant="outline" className="mb-4">Work</Badge>
+            <h2 className="section-title text-fluid-2xl text-foreground mb-6">
+              Featured Projects
+            </h2>
+            <p className="text-fluid-base text-muted-foreground max-w-2xl mx-auto">
+              Real-world impact across governments, multilateral agencies, and nonprofits.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
             {[
               {
-                title: 'AI & LLM Engineering',
-                description: 'Building production LLM workflows, GenAI solutions, and multimodal AI systems for large-scale data processing.',
-                features: ['Gemini & GPT Integration', 'LLM Fine-tuning & Prompt Engineering', 'Autonomous AI Agents', 'MLOps & Model Deployment']
+                org: 'Gates Foundation',
+                title: 'Gemini LLM Pipeline',
+                desc: 'GCP pipeline with Gemini multimodal LLM to extract structured data from 10M+ PDFs for national survey sampling.',
+                skills: ['Python', 'GCP', 'Gemini', 'BigQuery']
               },
               {
-                title: 'Cloud Data Engineering',
-                description: 'Architecting cloud-native data systems, ETL/ELT pipelines, and scalable infrastructure across AWS, GCP, and Azure.',
-                features: ['Serverless Data Pipelines', 'Data Warehousing (Redshift/BigQuery)', 'Real-time Processing', 'Cost Optimization (<$20/month)']
+                org: 'World Bank Group',
+                title: 'Data360 Platform',
+                desc: 'Migrating pipelines to Databricks, standardizing datasets using SDMX, building GAFS Dashboard for food security.',
+                skills: ['Python', 'Databricks', 'SQL', 'APIs']
               },
               {
-                title: 'Social Impact Solutions',
-                description: 'Delivering data-driven solutions for governments, nonprofits, and social good organizations to maximize societal impact.',
-                features: ['Government Analytics Platforms', 'Nonprofit Data Systems', 'Policy Impact Measurement', 'Benefit Access Optimization']
+                org: 'Niti Aayog',
+                title: 'NDAP Dashboard',
+                desc: 'Redshift architecture ingesting terabytes of clickstream data with Superset dashboards for government analytics.',
+                skills: ['AWS', 'Redshift', 'Spark', 'Superset']
+              },
+              {
+                org: 'UNICEF Malawi',
+                title: 'Cash Transfer Monitoring',
+                desc: 'Automated data workflows for Social Cash Transfer Programme, reducing manual update time by 25%.',
+                skills: ['Python', 'APIs', 'SQL']
+              },
+              {
+                org: 'Indus Action',
+                title: 'Benefits Platform',
+                desc: 'Scalable pipelines with AWS to expand government benefit access to 3M+ workers with real-time tracking.',
+                skills: ['AWS', 'Redshift', 'Glue', 'FastAPI']
+              },
+              {
+                org: 'IDinsight',
+                title: 'MOSAIKS Imagery',
+                desc: 'Optimized satellite imagery sampling with Dask on Azure Kubernetes, achieving 10x faster runtime.',
+                skills: ['Azure', 'Kubernetes', 'Dask', 'Python']
               }
-            ].map((service, index) => (
-              <div
-                key={service.title}
-                className="bg-white dark:bg-gray-900 p-8 rounded-lg border border-gray-200 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-600 transition-all duration-300 group"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4 group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
-                  {service.title}
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">{service.description}</p>
-                <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
-                  {service.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-center">
-                      <span className="w-1.5 h-1.5 bg-gray-900 dark:bg-white rounded-full mr-2 flex-shrink-0"></span>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            ].map((project) => (
+              <Card key={project.title} className="card-reveal card-3d border-0 shadow-sm group flex flex-col">
+                <CardHeader className="pb-3">
+                  <span className="text-xs text-muted-foreground uppercase tracking-wider">{project.org}</span>
+                  <CardTitle className="text-lg mt-1 group-hover:text-muted-foreground transition-colors">
+                    {project.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex-1 flex flex-col justify-between">
+                  <CardDescription className="leading-relaxed">{project.desc}</CardDescription>
+                  <div className="flex flex-wrap gap-1.5 mt-4 pt-4 border-t border-border/50">
+                    {project.skills.map((skill) => (
+                      <Badge key={skill} variant="outline" className="text-xs font-normal">
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
 
-          {/* Featured Projects */}
-          <div id="work" className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">Featured Projects</h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400">Real-world impact across governments, nonprofits, and enterprises</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              {
-                title: 'Gemini LLM Pipeline (Gates Foundation)',
-                description: 'Architected GCP pipeline with Google Gemini processing 10M+ PDFs for national survey sampling in India.',
-                technologies: ['Google Gemini', 'GCP', 'Python', 'BigQuery']
-              },
-              {
-                title: 'National Data Analytics Platform (NDAP)',
-                description: 'Led Redshift architecture ingesting terabytes of clickstream data for India\'s government analytics platform.',
-                technologies: ['AWS Redshift', 'Apache Spark', 'Superset', 'Python']
-              },
-              {
-                title: 'SCTP Monitoring Dashboard (UNICEF)',
-                description: 'Built automated data transformation workflows for Malawi government cash transfer program monitoring.',
-                technologies: ['Python', 'Google Data Studio', 'APIs', 'ETL']
-              }
-            ].map((project, index) => (
-              <div
-                key={project.title}
-                className="bg-white dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-600 transition-all duration-300 group"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
-                  {project.title}
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">{project.description}</p>
-                <div className="flex flex-wrap gap-2">
-                  {project.technologies.map((tech) => (
-                    <span
-                      key={tech}
-                      className="bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs px-2 py-1 rounded hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      {tech}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
+          <div className="section-reveal text-center mt-16">
+            <Button variant="outline" asChild>
+              <a href="/projects">
+                View All Projects <ArrowRight className="w-4 h-4 ml-2" />
+              </a>
+            </Button>
           </div>
         </div>
       </section>
 
       {/* Contact Section */}
-      <section id="contact" className="py-20 bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">Get In Touch</h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400">Ready to start your next data project?</p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <div>
-              <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Let&apos;s work together</h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-8">
-                I&apos;m always interested in new opportunities and exciting projects.
-                Whether you need help with data engineering, analytics, or cloud solutions,
-                I&apos;d love to hear from you.
+      <section id="contact" className="py-16 lg:py-20 bg-muted/20">
+        <div className="container-custom">
+          <div className="max-w-4xl mx-auto">
+            <div className="section-reveal text-center mb-10">
+              <Badge variant="outline" className="mb-4">Contact</Badge>
+              <h2 className="section-title text-fluid-2xl text-foreground mb-6">
+                Let&apos;s Connect
+              </h2>
+              <p className="text-fluid-base text-muted-foreground">
+                Interested in working together? I&apos;d love to hear about your project.
               </p>
-
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <Mail className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  <span className="text-gray-600 dark:text-gray-400">yashi@example.com</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Phone className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  <span className="text-gray-600 dark:text-gray-400">+1 (555) 123-4567</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <MapPin className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  <span className="text-gray-600 dark:text-gray-400">San Francisco, CA</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Linkedin className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  <a href="#" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">linkedin.com/in/yashi-shukla</a>
-                </div>
-              </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-              <form className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Name</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                  />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Contact Info */}
+              <div className="card-reveal space-y-5">
+                <p className="text-muted-foreground leading-relaxed">
+                  I&apos;m particularly interested in projects at the intersection of data engineering,
+                  AI, and social impact. Whether it&apos;s LLM pipelines, cloud architecture, or
+                  analytics solutions. Let&apos;s talk!
+                </p>
+
+                <div className="space-y-4">
+                  {[
+                    { icon: MapPin, label: 'New Delhi, India' },
+                    { icon: Mail, label: 'yashishkl1@gmail.com', href: 'mailto:yashishkl1@gmail.com' },
+                    { icon: Linkedin, label: 'linkedin.com/in/yashi-shukla', href: 'https://linkedin.com/in/yashi-shukla' },
+                    { icon: Github, label: 'github.com/yashi-shukla', href: 'https://github.com/yashi-shukla' },
+                  ].map(({ icon: Icon, label, href }) => (
+                    <div key={label} className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                        <Icon className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                      {href ? (
+                        <a
+                          href={href}
+                          target={href.startsWith('http') ? '_blank' : undefined}
+                          rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                          className="text-sm animated-underline"
+                        >
+                          {label}
+                        </a>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">{label}</span>
+                      )}
+                    </div>
+                  ))}
                 </div>
-    <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
-                  <input
-                    type="email"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Message</label>
-                  <textarea
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                  ></textarea>
-                </div>
-                <button
-                  type="submit"
-                  className="w-full bg-blue-600 dark:bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
-                >
-                  Send Message
-                </button>
-              </form>
+              </div>
+
+              {/* Contact Form */}
+              <Card className="card-reveal border-0 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg">Send a Message</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Name</label>
+                      <input
+                        type="text"
+                        placeholder="Your name"
+                        className="w-full px-4 py-2.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring transition-shadow"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Email</label>
+                      <input
+                        type="email"
+                        placeholder="your@email.com"
+                        className="w-full px-4 py-2.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring transition-shadow"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Message</label>
+                      <textarea
+                        rows={4}
+                        placeholder="Tell me about your project..."
+                        className="w-full px-4 py-2.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring transition-shadow resize-none"
+                      />
+                    </div>
+                    <Button type="submit" className="w-full">
+                      Send Message
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 dark:bg-gray-950 text-white dark:text-gray-300 py-8 border-t border-gray-800 dark:border-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p>&copy; 2024 Yashi Shukla. All rights reserved.</p>
+      {/* Footer - Minimal */}
+      <footer className="py-6 border-t border-border/40">
+        <div className="container-custom">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-muted-foreground">
+              &copy; 2025 Yashi Shukla
+            </p>
+            <div className="flex items-center gap-6">
+              <a href="/Yashi_Resume.pdf" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Resume
+              </a>
+              <a href="https://linkedin.com/in/yashi-shukla" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                LinkedIn
+              </a>
+              <a href="https://github.com/yashi-shukla" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                GitHub
+              </a>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
