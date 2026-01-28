@@ -257,7 +257,7 @@ export const getProjectCountByCountry = (): Record<string, number> => {
 
 // Get unique countries with projects
 export const getCountriesWithProjects = (): string[] => {
-  return [...new Set(PROJECTS.map(p => p.country))]
+  return Array.from(new Set(PROJECTS.map(p => p.country)))
 }
 
 // Stats calculations

@@ -134,7 +134,7 @@ export default function ProjectsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           {/* Globe */}
-          <div className="bg-muted/30 rounded-lg overflow-hidden h-[600px] shadow-sm">
+          <div className="bg-muted/30 rounded-lg overflow-visible h-[600px] shadow-sm">
             <DraggableGlobe
               showFilters={false}
               showTitle={false}

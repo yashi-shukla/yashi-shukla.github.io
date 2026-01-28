@@ -1,15 +1,16 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { ArrowRight, Mail, MapPin, Linkedin, Github, Menu, X, ChevronDown } from 'lucide-react'
+import { Mail, MapPin, Linkedin, Github, Menu, X, ChevronDown } from 'lucide-react'
 import { DraggableGlobe } from '@/components/draggable-globe'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { NumberTicker } from '@/components/ui/number-ticker'
-import { STATS, PROJECTS } from '@/lib/constants'
+import { STATS } from '@/lib/constants'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
@@ -376,11 +377,9 @@ export default function Page() {
           </div>
 
           <div className="section-reveal text-center mt-16">
-            <Button variant="outline" asChild>
-              <a href="/projects">
-                View All Projects <ArrowRight className="w-4 h-4 ml-2" />
-              </a>
-            </Button>
+            <a href="/projects">
+              <InteractiveHoverButton>View All Projects</InteractiveHoverButton>
+            </a>
           </div>
         </div>
       </section>

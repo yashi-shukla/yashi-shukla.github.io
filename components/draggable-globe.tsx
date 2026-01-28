@@ -2,8 +2,10 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react'
 import * as d3 from 'd3'
+import * as topojson from 'topojson-client'
+import type { Topology } from 'topojson-specification'
 import { useTheme } from '@/contexts/ThemeContext'
-import { PROJECTS, SKILLS, REGIONS, getProjectsByCountry, getProjectCountByCountry, type ProjectData } from '@/lib/constants'
+import { PROJECTS, SKILLS, REGIONS, getProjectCountByCountry, type ProjectData } from '@/lib/constants'
 
 // Interpolate between two raw projection functions
 // Based on the v0/Observable interpolateProjection technique
@@ -55,12 +57,6 @@ const GLOBE_CONFIG = {
   DRAG_DAMPING: 0.95 // For smoother drag deceleration
 }
 
-// Globe-specific project display interface (derived from shared PROJECTS)
-interface GlobeProjectData {
-  country: string
-  projectCount: number
-  projects: typeof PROJECTS
-}
 
 interface CountryData {
   country_code: string
@@ -88,6 +84,7 @@ interface DraggableGlobeProps {
 
 export function DraggableGlobe({
   showFilters = true,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   showTitle = true,
   showLegend = false,
   showInstructions = true,
@@ -191,6 +188,7 @@ export function DraggableGlobe({
   }, [])
 
   // Use centralized project data from constants
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const projectCountByCountry = React.useMemo(() => getProjectCountByCountry(), [])
 
   // Filter projects based on selections
@@ -206,6 +204,7 @@ export function DraggableGlobe({
   }, [selectedSkill, selectedRegion, selectedCountryFilter])
 
   // Countries that have projects (for highlighting)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const countriesWithProjects = React.useMemo(() => {
     return new Set(filteredProjects.map(p => p.country))
   }, [filteredProjects])
@@ -232,17 +231,18 @@ export function DraggableGlobe({
     }
   }
 
-  // Load world countries GeoJSON
+  // Load world countries from TopoJSON (handles antimeridian cutting properly)
   const loadWorldData = async () => {
     try {
       console.log('🌍 Fetching world countries data...')
-      const response = await fetch('/data/world-countries.json')
+      const response = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
-      const data = await response.json()
+      const world = await response.json() as Topology
+      const countries = topojson.feature(world, world.objects.countries) as unknown as d3.ExtendedFeatureCollection
       console.log('✅ World countries data loaded successfully')
-      return data
+      return countries
     } catch (error) {
       console.error('❌ Error loading world countries data:', error)
       return null
@@ -362,16 +362,38 @@ export function DraggableGlobe({
       }
     }
 
-    // Update country boundaries
+    // Update country boundaries — fade fills to transparent in flat map mode (boundaries only)
     if (elementsRef.current.countryPaths && path) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       elementsRef.current.countryPaths.attr('d', path as any)
+
+      // Interpolate fill opacity: fade non-project countries, keep project countries highlighted
+      if (alpha > 0.01) {
+        elementsRef.current.countryPaths.each(function(d: d3.ExtendedFeature) {
+          const hasProjects = filteredProjects.some(p =>
+            p.country === d.properties?.name ||
+            (p.country === 'USA' && (d.properties?.name === 'United States' || d.properties?.name === 'United States of America'))
+          )
+          const el = d3.select(this)
+          if (hasProjects) {
+            // Keep project countries visible with a subtle fill
+            el.attr('fill-opacity', Math.max(0.4, 1 - alpha * 0.6))
+          } else {
+            el.attr('fill-opacity', 1 - alpha)
+          }
+        })
+        const strokeOpacity = Math.min(1, 0.5 + alpha * 0.5)
+        elementsRef.current.countryPaths.attr('stroke-opacity', strokeOpacity)
+      } else {
+        elementsRef.current.countryPaths.attr('fill-opacity', 1)
+        elementsRef.current.countryPaths.attr('stroke-opacity', 1)
+      }
     }
 
     // Update graticule — fade out in flat map mode
     if (elementsRef.current.graticulePath && path) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       elementsRef.current.graticulePath
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .attr('d', path as any)
         .attr('opacity', Math.max(0, 0.5 - alpha * 1.5))
     }
@@ -530,7 +552,7 @@ export function DraggableGlobe({
       if (!countryName) return []
       return filteredProjects.filter(p =>
         p.country === countryName ||
-        (p.country === 'USA' && countryName === 'United States') ||
+        (p.country === 'USA' && (countryName === 'United States' || countryName === 'United States of America')) ||
         (p.country === 'India' && countryName === 'India') ||
         (p.country === 'Malawi' && countryName === 'Malawi') ||
         (p.country === 'Kenya' && countryName === 'Kenya') ||
@@ -565,7 +587,7 @@ export function DraggableGlobe({
           return projects.length > 0 ? 'pointer' : 'default'
         })
         .on('mouseover', function(event, d) {
-          const countryName = d.properties?.name === 'United States' ? 'USA' : d.properties?.name
+          const countryName = d.properties?.name === 'United States of America' ? 'USA' : d.properties?.name
           const projects = getCountryProjects(d.properties?.name)
 
           if (countryName) setHoveredCountry(countryName)
@@ -587,7 +609,7 @@ export function DraggableGlobe({
             .attr('stroke-width', projects.length > 0 ? 0.8 : 0.5)
         })
         .on('click', function(event, d) {
-          const countryName = d.properties?.name === 'United States' ? 'USA' : d.properties?.name
+          const countryName = d.properties?.name === 'United States of America' ? 'USA' : d.properties?.name
           const projects = getCountryProjects(d.properties?.name)
 
           if (projects.length > 0 && countryName) {
@@ -830,7 +852,7 @@ export function DraggableGlobe({
 
       {/* Country Tooltip - minimal floating style */}
       {hoveredCountry && mounted && (
-        <div className={`absolute ${compact ? 'top-4' : 'top-32'} left-1/2 transform -translate-x-1/2 bg-white dark:bg-neutral-900 rounded-md px-4 py-3 shadow-lg border border-neutral-200 dark:border-neutral-800 min-w-[200px] transition-all duration-200`}>
+        <div className={`absolute ${compact ? 'top-16' : 'top-32'} left-1/2 transform -translate-x-1/2 z-20 bg-white dark:bg-neutral-900 rounded-md px-4 py-3 shadow-lg border border-neutral-200 dark:border-neutral-800 min-w-[200px] transition-all duration-200`}>
           <div className="text-center">
             {(() => {
               const countryInfo = countryData.find(c =>
