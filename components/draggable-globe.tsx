@@ -1,31 +1,17 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import * as d3 from 'd3'
+import { useTheme } from '@/contexts/ThemeContext'
 
 // Configuration constants inspired by ben-tiki/d3-globe
 const GLOBE_CONFIG = {
   ROTATION_SENSITIVITY: 0.5,
-  AUTO_ROTATION_SPEED: 0.3,
+  AUTO_ROTATION_SPEED: 0.2, // Reduced from 0.3 for smoother rotation
   SCALE: 250,
-  HOVER_SCALE_FACTOR: 1.2
+  HOVER_SCALE_FACTOR: 1.2,
+  UPDATE_THROTTLE: 16 // ~60fps
 }
-
-// Color palette for choropleth mapping (inspired by ben-tiki/d3-globe)
-const COLOR_RANGE = [
-  '#f7fbff', // Very light blue
-  '#deebf7',
-  '#c6dbef',
-  '#9ecae1',
-  '#6baed6',
-  '#4292c6',
-  '#2171b5',
-  '#08519c',
-  '#08306b'  // Dark blue
-]
-
-// Color scale options (linear or logarithmic)
-const COLOR_SCALE = 'linear' // Can be 'linear' or 'log'
 
 interface ProjectData {
   id: string
@@ -51,37 +37,94 @@ interface CountryData {
   subregion: string
 }
 
-export function DraggableGlobe() {
+interface DraggableGlobeProps {
+  showFilters?: boolean
+  showTitle?: boolean
+  showLegend?: boolean
+  showInstructions?: boolean
+  compact?: boolean
+  showProjectPanel?: boolean
+  onProjectSelect?: (projectId: string | null) => void
+  externalSelectedProject?: string | null
+}
+
+export function DraggableGlobe({ 
+  showFilters = true, 
+  showTitle = true, 
+  showLegend = false,
+  showInstructions = true,
+  compact = false,
+  showProjectPanel = true,
+  onProjectSelect,
+  externalSelectedProject
+}: DraggableGlobeProps = {}) {
+  const { theme } = useTheme()
   const globeRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
-  const [scrollProgress, setScrollProgress] = useState(0)
+  const rotationRef = useRef<[number, number, number]>([0, -10, 0])
+  const animationFrameRef = useRef<number>()
+  const autoRotateRef = useRef<boolean>(false)
+  const isDraggingRef = useRef<boolean>(false)
+  const projectionRef = useRef<d3.GeoProjection | null>(null)
+  const pathRef = useRef<d3.GeoPath | null>(null)
+  const elementsRef = useRef<{
+    surfaceDots: d3.Selection<SVGCircleElement, { lat: number; lng: number; id: string }, SVGSVGElement, unknown> | null
+    projectDots: d3.Selection<SVGGElement, ProjectData, SVGSVGElement, unknown> | null
+    countryPaths: d3.Selection<SVGPathElement, GeoJSON.Feature, SVGSVGElement, unknown> | null
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    graticulePath: any | null
+  }>({ surfaceDots: null, projectDots: null, countryPaths: null, graticulePath: null })
+  
+  // Theme-aware colors
+  const isDark = theme === 'dark'
+  const colors = {
+    globeFill: isDark ? 'rgba(31, 41, 55, 0.1)' : 'rgba(243, 244, 246, 0.5)',
+    globeStroke: isDark ? '#9ca3af' : '#6b7280',
+    globeShadow: isDark ? 'rgba(156, 163, 175, 0.2)' : 'rgba(107, 114, 128, 0.3)',
+    graticule: isDark ? '#6b7280' : '#9ca3af',
+    countryDefault: isDark ? '#4b5563' : '#d1d5db',
+    countryHover: isDark ? '#6b7280' : '#9ca3af',
+    countryWithProject: isDark ? '#374151' : '#9ca3af',
+    surfaceDot: isDark ? '#4b5563' : '#d1d5db',
+    markerDefault: isDark ? '#60a5fa' : '#3b82f6',
+    markerHover: isDark ? '#93c5fd' : '#2563eb'
+  }
+  
   const [mounted, setMounted] = useState(false)
-  const [rotation, setRotation] = useState<[number, number, number]>([0, -10, 0])
   const [selectedSector, setSelectedSector] = useState('All')
   const [selectedRegion, setSelectedRegion] = useState('All')
-  const [hoveredProject, setHoveredProject] = useState<string | null>(null)
+  const [internalSelectedProject, setInternalSelectedProject] = useState<string | null>(null)
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
   const [countryData, setCountryData] = useState<CountryData[]>([])
-  const [globeCoordinates, setGlobeCoordinates] = useState<ProjectData[] | null>(null)
   const [worldData, setWorldData] = useState<GeoJSON.FeatureCollection | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  
+  // Use external state if provided, otherwise use internal state
+  const hoveredProject = externalSelectedProject !== undefined ? externalSelectedProject : internalSelectedProject
+  const setHoveredProject = (projectId: string | null) => {
+    if (onProjectSelect) {
+      onProjectSelect(projectId)
+    } else {
+      setInternalSelectedProject(projectId)
+    }
+  }
 
-  // Generate optimized dot grid for globe surface
+  // Generate optimized dot grid for globe surface - SIGNIFICANTLY REDUCED for performance
   const surfacePoints = React.useMemo(() => {
     const dots = []
-    const step = 10 // Increased step for better performance
+    const step = 20 // Increased from 10 to 20 for much better performance
 
-    for (let lat = -80; lat <= 80; lat += step) {
+    for (let lat = -75; lat <= 75; lat += step) {
       const radius = Math.cos((lat * Math.PI) / 180)
       const circumference = 2 * Math.PI * radius
-      const numDots = Math.max(1, Math.floor(circumference / (step * Math.PI / 180)))
+      const numDots = Math.max(1, Math.floor(circumference / (step * Math.PI / 180) * 0.5)) // Reduced density by 50%
 
       for (let i = 0; i < numDots; i++) {
         const lng = (i * 360) / numDots - 180
         dots.push({ lat, lng, id: `${lat}-${lng}` })
       }
     }
+    console.log(`🔵 Generated ${dots.length} surface dots (optimized for performance)`)
     return dots
   }, [])
 
@@ -263,23 +306,6 @@ export function DraggableGlobe() {
     }
   }
 
-  // Load globe coordinates for enhanced projection
-  const loadGlobeCoordinates = async () => {
-    try {
-      console.log('📍 Fetching globe coordinates...')
-      const response = await fetch('/data/globe-coordinates.json')
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-      const coordinates = await response.json()
-      console.log('✅ Globe coordinates loaded successfully')
-      return coordinates
-    } catch (error) {
-      console.error('❌ Error loading globe coordinates:', error)
-      return null
-    }
-  }
-
   // Load world countries GeoJSON
   const loadWorldData = async () => {
     try {
@@ -297,23 +323,6 @@ export function DraggableGlobe() {
     }
   }
 
-  // Enhanced color scale for choropleth mapping
-  const getColorScale = React.useMemo(() => {
-    const maxProjects = Math.max(...filteredProjects.map(p => p.projects))
-    const domain = COLOR_SCALE === 'log'
-      ? [1, Math.log10(maxProjects)]
-      : [0, maxProjects]
-
-    const scale = COLOR_SCALE === 'log'
-      ? d3.scaleLog().domain(domain).range([0, COLOR_RANGE.length - 1])
-      : d3.scaleLinear().domain(domain).range([0, COLOR_RANGE.length - 1])
-
-    return (value: number) => {
-      if (value === 0) return 'rgba(55, 65, 81, 0.1)'
-      const index = Math.floor(scale(value))
-      return COLOR_RANGE[Math.min(index, COLOR_RANGE.length - 1)]
-    }
-  }, [filteredProjects])
 
   // Set mounted state
   useEffect(() => {
@@ -325,25 +334,21 @@ export function DraggableGlobe() {
     console.log('🌍 Starting globe data loading...')
     const loadData = async () => {
       try {
-        // Soft timeout (resolve instead of reject) to avoid crashing UI
         const timeoutPromise = new Promise(resolve =>
           setTimeout(() => resolve(undefined), 15000)
         )
 
         const dataPromise = Promise.all([
           loadWorldData(),
-          loadCountryData(),
-          loadGlobeCoordinates()
+          loadCountryData()
         ])
 
-        console.log('⏳ Loading world data, country data, and coordinates...')
+        console.log('⏳ Loading world data and country data...')
         const raced = await Promise.race([dataPromise, timeoutPromise])
-        const [worldDataResult, countryDataResult, coordinates] = Array.isArray(raced) ? raced : [null, null, null]
+        const [worldDataResult, countryDataResult] = Array.isArray(raced) ? raced : [null, null]
 
-        // Set the loaded data to state
         if (worldDataResult) setWorldData(worldDataResult)
         if (countryDataResult) setCountryData(countryDataResult)
-        if (coordinates) setGlobeCoordinates(coordinates)
 
         console.log('✅ All globe data loaded successfully')
         setIsLoading(false)
@@ -354,68 +359,181 @@ export function DraggableGlobe() {
     }
 
     loadData()
-  }, []) // Empty dependency array - runs only once
+  }, [])
 
-  // Globe rendering effect - runs when data is loaded and mounted
+  // Optimized update function using requestAnimationFrame
+  const updateGlobePositions = useCallback(() => {
+    if (!projectionRef.current || !svgRef.current) return
+
+    const projection = projectionRef.current
+    const path = pathRef.current
+    const width = 600
+    const height = 600
+    const radius = GLOBE_CONFIG.SCALE
+
+    projection.rotate(rotationRef.current)
+
+    // Update surface dots (optimized with reduced calculations)
+    if (elementsRef.current.surfaceDots) {
+      elementsRef.current.surfaceDots.each(function(d: { lat: number; lng: number }) {
+        const coords = projection([d.lng, d.lat])
+        if (coords) {
+          const [x, y] = coords
+          const distance = Math.sqrt((x - width/2)**2 + (y - height/2)**2)
+          const visible = distance < radius
+          
+          if (visible) {
+            const depth = (radius - distance) / radius
+            d3.select(this)
+              .attr('cx', x)
+              .attr('cy', y)
+              .attr('opacity', Math.max(0.1, depth * 0.3))
+              .attr('r', 1.2 + depth * 0.3)
+          } else {
+            d3.select(this).attr('opacity', 0)
+          }
+        }
+      })
+    }
+
+    // Update country boundaries
+    if (elementsRef.current.countryPaths && path) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      elementsRef.current.countryPaths.attr('d', path as any)
+    }
+
+    // Update project dots (no transitions during rotation for performance)
+    if (elementsRef.current.projectDots) {
+      elementsRef.current.projectDots.each(function(d: ProjectData) {
+        const coords = projection([d.lng, d.lat])
+        if (coords) {
+          const [x, y] = coords
+          const distance = Math.sqrt((x - width/2)**2 + (y - height/2)**2)
+          const visible = distance < GLOBE_CONFIG.SCALE
+          const depth = (GLOBE_CONFIG.SCALE - distance) / GLOBE_CONFIG.SCALE
+          const baseSize = Math.max(5, d.projects / 6)
+          const size = visible ? baseSize + depth * 4 : 0
+
+          d3.select(this).select('.project-circle')
+            .attr('cx', x)
+            .attr('cy', y)
+            .attr('r', size)
+            .attr('opacity', visible ? 0.9 + depth * 0.1 : 0)
+
+          d3.select(this).select('.project-label')
+            .attr('x', x)
+            .attr('y', y - size - 8)
+        }
+      })
+    }
+
+    // Update graticule
+    if (elementsRef.current.graticulePath && path) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      elementsRef.current.graticulePath.attr('d', path as any)
+    }
+  }, [])
+
+  // Animation loop using requestAnimationFrame
+  useEffect(() => {
+    if (!mounted || isLoading) return
+
+    let lastTime = 0
+    const animate = (timestamp: number) => {
+      // Throttle updates to ~60fps
+      if (timestamp - lastTime < GLOBE_CONFIG.UPDATE_THROTTLE) {
+        animationFrameRef.current = requestAnimationFrame(animate)
+        return
+      }
+      lastTime = timestamp
+
+      // Auto-rotate if enabled
+      if (autoRotateRef.current && !isDraggingRef.current) {
+        rotationRef.current = [
+          rotationRef.current[0] + GLOBE_CONFIG.AUTO_ROTATION_SPEED,
+          rotationRef.current[1],
+          rotationRef.current[2]
+        ]
+        updateGlobePositions()
+      }
+
+      animationFrameRef.current = requestAnimationFrame(animate)
+    }
+
+    animationFrameRef.current = requestAnimationFrame(animate)
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+      }
+    }
+  }, [mounted, isLoading, updateGlobePositions])
+
+  // Start auto-rotation after delay
+  useEffect(() => {
+    if (!mounted || isLoading) return
+
+    const timer = setTimeout(() => {
+      autoRotateRef.current = true
+    }, 2000)
+
+    return () => clearTimeout(timer)
+  }, [mounted, isLoading])
+
+  // Globe initialization - runs once when data is loaded
   useEffect(() => {
     if (!svgRef.current || !mounted || isLoading) return
 
-    console.log('🎨 Starting globe rendering...')
+    console.log('🎨 Initializing globe...')
     const svg = d3.select(svgRef.current)
     const width = 600
     const height = 600
-    const radius = 250
-
-    // Create globe projection with improved settings
-    const projection = d3.geoOrthographic()
-      .scale(GLOBE_CONFIG.SCALE)
-      .translate([width / 2, height / 2])
-      .rotate(rotation)
-      .clipAngle(90)
-
-    const path = d3.geoPath().projection(projection)
 
     // Clear previous content
     svg.selectAll('*').remove()
 
-    // Enhanced drag behavior based on Observable example
+    // Create globe projection
+    const projection = d3.geoOrthographic()
+      .scale(GLOBE_CONFIG.SCALE)
+      .translate([width / 2, height / 2])
+      .rotate(rotationRef.current)
+      .clipAngle(90)
+
+    const path = d3.geoPath().projection(projection)
+    
+    projectionRef.current = projection
+    pathRef.current = path
+
+    // Drag behavior
     const drag = d3.drag()
       .subject(function() {
         const r = projection.rotate()
         return { x: r[0] / GLOBE_CONFIG.ROTATION_SENSITIVITY, y: -r[1] / GLOBE_CONFIG.ROTATION_SENSITIVITY }
       })
       .on('start', function() {
-        setIsDragging(true)
-        stopAutoRotate()
+        isDraggingRef.current = true
+        autoRotateRef.current = false
       })
       .on('drag', function(event) {
-        const newRotation: [number, number, number] = [
+        rotationRef.current = [
           event.x * GLOBE_CONFIG.ROTATION_SENSITIVITY,
           -Math.max(-90, Math.min(90, event.y * GLOBE_CONFIG.ROTATION_SENSITIVITY)),
-          rotation[2]
+          rotationRef.current[2]
         ]
-        setRotation(newRotation)
-        projection.rotate(newRotation)
-        updateGlobe()
+        updateGlobePositions()
       })
       .on('end', function() {
-        setIsDragging(false)
+        isDraggingRef.current = false
         setTimeout(() => {
-          if (!isDragging) startAutoRotate()
+          if (!isDraggingRef.current) {
+            autoRotateRef.current = true
+          }
         }, 3000)
       })
 
-    // Add interactive sphere for drag (visible for debugging)
-    svg.append('circle')
-      .attr('cx', width / 2)
-      .attr('cy', height / 2)
-      .attr('r', GLOBE_CONFIG.SCALE)
-      .attr('fill', 'transparent')
-      .attr('stroke', 'none')
-      .style('cursor', 'grab')
-      
-    // Apply drag behavior to the entire SVG
-    svg.call(drag)
+    // Apply drag to SVG
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    svg.call(drag as any)
       .style('cursor', 'grab')
       .on('mousedown', function() {
         d3.select(this).style('cursor', 'grabbing')
@@ -424,58 +542,62 @@ export function DraggableGlobe() {
         d3.select(this).style('cursor', 'grab')
       })
 
-    // Add globe outline with gray theme
+    // Add globe outline
     svg.append('circle')
       .attr('cx', width / 2)
       .attr('cy', height / 2)
       .attr('r', GLOBE_CONFIG.SCALE)
-      .attr('fill', 'rgba(31, 41, 55, 0.1)') // Dark gray fill
-      .attr('stroke', '#9ca3af') // Light gray stroke
+      .attr('fill', colors.globeFill)
+      .attr('stroke', colors.globeStroke)
       .attr('stroke-width', 2)
-      .style('filter', 'drop-shadow(0 0 20px rgba(156, 163, 175, 0.2))')
+      .style('filter', `drop-shadow(0 0 20px ${colors.globeShadow})`)
       .style('pointer-events', 'none')
 
-    // Add subtle grid lines with gray theme
+    // Add graticule
     const graticule = d3.geoGraticule().step([15, 15])
-    svg.append('path')
+    const graticulePath = svg.append('path')
       .datum(graticule)
       .attr('d', path)
       .attr('fill', 'none')
-      .attr('stroke', '#6b7280') // Medium gray
+      .attr('stroke', colors.graticule)
       .attr('stroke-width', 0.5)
       .attr('opacity', 0.3)
 
-    // Add country boundaries with choropleth effect (using stored worldData)
+    elementsRef.current.graticulePath = graticulePath
+
+    // Add country boundaries
+    let countryPaths = null
     if (worldData && worldData.features) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const countryPaths = svg.selectAll('.country')
+      countryPaths = svg.selectAll('.country')
         .data(worldData.features)
         .enter()
         .append('path')
         .attr('class', 'country')
         .attr('d', path)
         .attr('fill', d => {
+          const countryName = d.properties?.name
+          if (!countryName) return colors.countryDefault
           const projectsInCountry = filteredProjects.filter(p =>
-            p.name === d.properties.name ||
-            (p.name === 'USA' && d.properties.name === 'United States') ||
-            (p.name === 'South Africa' && d.properties.name === 'South Africa')
+            p.name === countryName ||
+            (p.name === 'USA' && countryName === 'United States') ||
+            (p.name === 'South Africa' && countryName === 'South Africa')
           )
           const totalProjects = projectsInCountry.reduce((sum, p) => sum + p.projects, 0)
-          return getColorScale(totalProjects)
+          return totalProjects > 0 ? colors.countryWithProject : colors.countryDefault
         })
-        .attr('stroke', '#4b5563')
+        .attr('stroke', colors.countryDefault)
         .attr('stroke-width', 0.3)
         .attr('opacity', 0.8)
         .style('cursor', 'pointer')
         .on('mouseover', function(event, d) {
-          const countryName = d.properties.name === 'United States' ? 'USA' : d.properties.name
-          setHoveredCountry(countryName)
+          const countryName = d.properties?.name === 'United States' ? 'USA' : d.properties?.name
+          if (countryName) setHoveredCountry(countryName)
           d3.select(this)
             .transition()
             .duration(200)
             .attr('opacity', 1)
             .attr('stroke-width', 1)
-            .attr('stroke', '#9ca3af')
+            .attr('stroke', colors.countryHover)
         })
         .on('mouseout', function() {
           setHoveredCountry(null)
@@ -484,142 +606,57 @@ export function DraggableGlobe() {
             .duration(200)
             .attr('opacity', 0.8)
             .attr('stroke-width', 0.3)
-            .attr('stroke', '#4b5563')
+            .attr('stroke', colors.countryDefault)
         })
+
+      elementsRef.current.countryPaths = countryPaths
     }
 
-    // Add surface dots with gray theme
+    // Add surface dots
     const surfaceDots = svg.selectAll('.surface-dot')
       .data(surfacePoints)
       .enter()
       .append('circle')
       .attr('class', 'surface-dot')
       .attr('r', 1.2)
-      .attr('fill', '#9ca3af') // Light gray dots
-      .attr('opacity', 0.3)
+      .attr('fill', colors.surfaceDot)
+      .attr('opacity', 0.2)
 
-    // Add project locations (filtered)
+    elementsRef.current.surfaceDots = surfaceDots
+
+    // Add project locations
     const projectDots = svg.selectAll('.project-dot')
       .data(filteredProjects)
       .enter()
       .append('g')
       .attr('class', 'project-dot')
 
-    // Project circles with light gray color
     projectDots.append('circle')
       .attr('class', 'project-circle')
       .attr('r', 0)
-      .attr('fill', '#e5e7eb') // Light gray
-      .attr('stroke', '#ffffff') // White stroke for contrast
+      .attr('fill', colors.markerDefault)
+      .attr('stroke', isDark ? '#ffffff' : '#000000')
       .attr('stroke-width', 1)
       .attr('opacity', 0.9)
       .style('cursor', 'pointer')
-      .style('filter', 'drop-shadow(0 0 8px rgba(229, 231, 235, 0.8))')
+      .style('filter', `drop-shadow(0 0 8px ${colors.markerDefault})`)
       .on('click', function(event, d) {
         setHoveredProject(hoveredProject === d.id ? null : d.id)
       })
 
-    // Project labels
     projectDots.append('text')
       .attr('class', 'project-label')
       .attr('text-anchor', 'middle')
       .attr('font-size', '11px')
       .attr('font-weight', 'bold')
-      .attr('fill', '#ffffff')
+      .attr('fill', isDark ? '#ffffff' : '#000000')
       .attr('opacity', 0)
-      .style('text-shadow', '0 0 4px rgba(0, 0, 0, 0.8)')
+      .style('text-shadow', isDark ? '0 0 4px rgba(0, 0, 0, 0.8)' : '0 0 4px rgba(255, 255, 255, 0.8)')
       .text(d => `${d.name} (${d.projects})`)
 
-    // Pulse animation for project dots
-    const pulse = () => {
-      projectDots.selectAll('.project-circle')
-        .transition()
-        .duration(2000)
-        .attr('opacity', 0.5)
-        .transition()
-        .duration(2000)
-        .attr('opacity', 0.9)
-    }
-
-    let pulseTimer: NodeJS.Timeout | undefined
-    const startPulse = () => {
-      pulseTimer = setInterval(pulse, 4000)
-    }
-    startPulse()
-
-    // Update positions based on rotation
-    const updateGlobe = () => {
-      if (!svgRef.current) return // Guard against calling updateGlobe before SVG is ready
-
-      projection.rotate(rotation)
-
-      // Update surface dots with depth-based opacity
-      if (surfaceDots) {
-        surfaceDots.each(function(d: { lat: number; lng: number }) {
-          const coords = projection([d.lng, d.lat])
-          if (coords) {
-            const [x, y] = coords
-            const distance = Math.sqrt((x - width/2)**2 + (y - height/2)**2)
-            const visible = distance < radius
-            const depth = (radius - distance) / radius
-
-            d3.select(this)
-              .attr('cx', x)
-              .attr('cy', y)
-              .attr('opacity', visible ? Math.max(0.1, depth * 0.4) : 0)
-              .attr('r', visible ? 1.5 + depth * 0.5 : 0)
-          }
-        })
-      }
-
-      // Update country boundaries if they exist
-      if (worldData && worldData.features) {
-        const countryPaths = svg.selectAll('.country')
-        if (!countryPaths.empty()) {
-          countryPaths.attr('d', path)
-        }
-      }
-
-      // Update project dots with enhanced visibility and animation
-      if (projectDots) {
-        projectDots.each(function(d: ProjectData, i: number) {
-          const coords = projection([d.lng, d.lat])
-          if (coords) {
-            const [x, y] = coords
-            const distance = Math.sqrt((x - width/2)**2 + (y - height/2)**2)
-            const visible = distance < GLOBE_CONFIG.SCALE
-            const depth = (GLOBE_CONFIG.SCALE - distance) / GLOBE_CONFIG.SCALE
-            const baseSize = Math.max(5, d.projects / 6)
-            const size = visible ? baseSize + depth * 4 : 0
-            const animationDelay = scrollProgress * i * 100
-
-            d3.select(this).select('.project-circle')
-              .attr('cx', x)
-              .attr('cy', y)
-              .transition()
-              .delay(animationDelay)
-              .duration(500)
-              .attr('r', size)
-              .attr('opacity', visible ? 0.9 + depth * 0.1 : 0)
-
-            d3.select(this).select('.project-label')
-              .attr('x', x)
-              .attr('y', y - size - 8)
-          }
-        })
-      }
-
-      // Update graticule if it exists
-      const graticulePath = svg.select('path')
-      if (!graticulePath.empty()) {
-        graticulePath.attr('d', path)
-      }
-    }
-
-    // Enhanced hover effects inspired by ben-tiki/d3-globe
-    if (projectDots) {
-      projectDots
-        .on('mouseover', function(event, d) {
+    // Hover effects
+    projectDots
+      .on('mouseover', function(event, d) {
         const coords = projection([d.lng, d.lat])
         if (coords) {
           const [x, y] = coords
@@ -627,7 +664,6 @@ export function DraggableGlobe() {
           const visible = distance < GLOBE_CONFIG.SCALE
           
           if (visible) {
-            // Scale up the project marker
             d3.select(this).select('.project-circle')
               .transition()
               .duration(200)
@@ -635,7 +671,6 @@ export function DraggableGlobe() {
               .attr('opacity', 1)
               .style('filter', 'drop-shadow(0 0 20px rgba(229, 231, 235, 1))')
 
-            // Show project label
             d3.select(this).select('.project-label')
               .transition()
               .duration(200)
@@ -666,63 +701,19 @@ export function DraggableGlobe() {
             .attr('opacity', 0)
         }
       })
-    }
 
-    updateGlobe()
+    elementsRef.current.projectDots = projectDots
 
-    // Auto-rotation functionality
-    let autoRotateTimer: NodeJS.Timeout
+    // Initial update
+    updateGlobePositions()
 
-    const startAutoRotate = () => {
-      autoRotateTimer = setInterval(() => {
-        if (!isDragging) {
-          setRotation(prev => [prev[0] + GLOBE_CONFIG.AUTO_ROTATION_SPEED, prev[1], prev[2]])
-        }
-      }, 50)
-    }
-
-    const stopAutoRotate = () => {
-      if (autoRotateTimer) clearInterval(autoRotateTimer)
-    }
-
-    // Start auto rotation after initial delay
-    const initialDelay = setTimeout(startAutoRotate, 2000)
-
-    return () => {
-      clearTimeout(initialDelay)
-      stopAutoRotate()
-      if (pulseTimer) clearInterval(pulseTimer)
-    }
+    console.log('✅ Globe initialized')
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mounted, rotation, filteredProjects, countryData, getColorScale, isLoading])
+  }, [mounted, isLoading, worldData, filteredProjects, theme])
 
-  // Scroll-based animations
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!globeRef.current) return
+  // Removed scroll-based animations for better performance
 
-      const rect = globeRef.current.getBoundingClientRect()
-      const elementTop = rect.top
-      const elementHeight = rect.height
-      const windowHeight = window.innerHeight
-
-      const isInViewport = elementTop < windowHeight && elementTop + elementHeight > 0
-
-      if (isInViewport) {
-        const progress = Math.max(0, Math.min(1,
-          (windowHeight - elementTop) / (windowHeight + elementHeight)
-        ))
-        setScrollProgress(progress)
-      }
-    }
-
-    window.addEventListener('scroll', handleScroll)
-    handleScroll()
-
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
-
-  // Show loading state while data is being fetched
+  // Show loading state
   if (isLoading) {
     return (
       <div className="relative w-full min-h-screen bg-black overflow-hidden flex items-center justify-center">
@@ -736,47 +727,43 @@ export function DraggableGlobe() {
   }
 
   return (
-    <div ref={globeRef} className="relative w-full min-h-screen bg-black overflow-hidden">
-      {/* Debug badge: data load verification */}
-      <div className="absolute top-2 left-2 z-20 text-[10px] leading-tight text-gray-400 bg-black/70 border border-gray-800 rounded px-2 py-1">
-        <div>GeoJSON: {worldData?.features?.length ?? 0} features</div>
-        <div>CSV: {countryData?.length ?? 0} rows</div>
-        <div>Coords: {globeCoordinates ? 'yes' : 'no'}</div>
-      </div>
-      {/* Filter Controls */}
-      <div className="absolute top-8 left-8 right-8 z-10">
-        <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-          <h2 className="text-2xl font-bold text-white">Global Project Portfolio</h2>
-          
-          <div className="flex flex-wrap gap-4">
-            <select
-              value={selectedSector}
-              onChange={(e) => setSelectedSector(e.target.value)}
-              className="px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white text-sm focus:ring-2 focus:ring-white focus:border-transparent"
-            >
-              <option value="">Sector</option>
-              {sectors.map(sector => (
-                <option key={sector} value={sector}>{sector}</option>
-              ))}
-            </select>
+    <div ref={globeRef} className={`relative w-full ${compact ? 'h-full' : 'min-h-screen'} bg-gray-50 dark:bg-black overflow-hidden`}>
 
-            <select
-              value={selectedRegion}
-              onChange={(e) => setSelectedRegion(e.target.value)}
-              className="px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white text-sm focus:ring-2 focus:ring-white focus:border-transparent"
-            >
-              <option value="">Region</option>
-              {regions.map(region => (
-                <option key={region} value={region}>{region}</option>
-              ))}
-            </select>
+      {/* Filter Controls - Only show if enabled */}
+      {showFilters && (
+        <div className="absolute top-8 left-8 right-8 z-10">
+          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+            {showTitle && <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Global Project Portfolio</h2>}
+            
+            <div className="flex flex-wrap gap-4">
+              <select
+                value={selectedSector}
+                onChange={(e) => setSelectedSector(e.target.value)}
+                className="px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-gray-500 dark:focus:ring-white focus:border-transparent"
+              >
+                <option value="">Sector</option>
+                {sectors.map(sector => (
+                  <option key={sector} value={sector}>{sector}</option>
+                ))}
+              </select>
 
+              <select
+                value={selectedRegion}
+                onChange={(e) => setSelectedRegion(e.target.value)}
+                className="px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-gray-500 dark:focus:ring-white focus:border-transparent"
+              >
+                <option value="">Region</option>
+                {regions.map(region => (
+                  <option key={region} value={region}>{region}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Globe Container */}
-      <div className="flex items-center justify-center min-h-screen pt-20 pb-8">
+      <div className={`flex items-center justify-center ${compact ? 'h-full' : 'min-h-screen pt-20 pb-8'}`}>
         <svg
           ref={svgRef}
           viewBox="0 0 600 600"
@@ -787,9 +774,9 @@ export function DraggableGlobe() {
         />
       </div>
 
-      {/* Project Details Panel */}
-      {hoveredProject && mounted && (
-        <div className="absolute bottom-8 left-8 right-8 bg-black/95 backdrop-blur-sm rounded-lg p-6 border border-gray-800">
+      {/* Project Details Panel - Only show if enabled */}
+      {showProjectPanel && hoveredProject && mounted && (
+        <div className="absolute bottom-8 left-8 right-8 bg-white/95 dark:bg-black/95 backdrop-blur-sm rounded-lg p-6 border border-gray-300 dark:border-gray-800">
           {(() => {
             const project = allProjects.find(p => p.id === hoveredProject)
             if (!project) return null
@@ -797,10 +784,10 @@ export function DraggableGlobe() {
             return (
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-semibold text-white">{project.description}</h3>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{project.description}</h3>
                   <button
                     onClick={() => setHoveredProject(null)}
-                    className="text-gray-400 hover:text-white transition-colors"
+                    className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
                   >
                     ×
                   </button>
@@ -808,35 +795,35 @@ export function DraggableGlobe() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   <div>
-                    <div className="text-sm text-gray-400">Location</div>
-                    <div className="text-white font-medium">{project.name}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Location</div>
+                    <div className="text-gray-900 dark:text-white font-medium">{project.name}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-400">Projects</div>
-                    <div className="text-white font-medium">{project.projects}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Projects</div>
+                    <div className="text-gray-900 dark:text-white font-medium">{project.projects}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-400">Year</div>
-                    <div className="text-white font-medium">{project.year}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Year</div>
+                    <div className="text-gray-900 dark:text-white font-medium">{project.year}</div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <div className="text-sm text-gray-400 mb-2">Sectors</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Sectors</div>
                     <div className="flex flex-wrap gap-2">
                       {project.sector.map(s => (
-                        <span key={s} className="bg-gray-800 text-gray-300 text-xs px-2 py-1 rounded">
+                        <span key={s} className="bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs px-2 py-1 rounded">
                           {s}
                         </span>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-400 mb-2">Technologies</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Technologies</div>
                     <div className="flex flex-wrap gap-2">
                       {project.technologies.map(tech => (
-                        <span key={tech} className="bg-gray-800 text-gray-300 text-xs px-2 py-1 rounded">
+                        <span key={tech} className="bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs px-2 py-1 rounded">
                           {tech}
                         </span>
                       ))}
@@ -850,18 +837,20 @@ export function DraggableGlobe() {
       )}
 
       {/* Legend */}
-      <div className="absolute bottom-8 right-8 bg-black/90 backdrop-blur-sm rounded-lg p-4 border border-gray-800">
-        <div className="text-sm font-medium text-white mb-3">Global Portfolio</div>
-        <div className="text-xs text-gray-400 space-y-1">
-          <div>Projects: {filteredProjects.length} of {allProjects.length}</div>
-          <div>Countries: {new Set(filteredProjects.map(p => p.name)).size}</div>
-          <div>Regions: {new Set(filteredProjects.map(p => p.region)).size}</div>
+      {showLegend && (
+        <div className="absolute bottom-8 right-8 bg-black/90 backdrop-blur-sm rounded-lg p-4 border border-gray-800">
+          <div className="text-sm font-medium text-white mb-3">Global Portfolio</div>
+          <div className="text-xs text-gray-400 space-y-1">
+            <div>Projects: {filteredProjects.length} of {allProjects.length}</div>
+            <div>Countries: {new Set(filteredProjects.map(p => p.name)).size}</div>
+            <div>Regions: {new Set(filteredProjects.map(p => p.region)).size}</div>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Enhanced Country Tooltip with Flag (inspired by ben-tiki/d3-globe) */}
+      {/* Country Tooltip */}
       {hoveredCountry && mounted && (
-        <div className="absolute top-32 left-1/2 transform -translate-x-1/2 bg-black/95 backdrop-blur-sm rounded-lg p-4 border border-gray-800 min-w-[250px]">
+        <div className={`absolute ${compact ? 'top-4' : 'top-32'} left-1/2 transform -translate-x-1/2 bg-black/95 backdrop-blur-sm rounded-lg p-4 border border-gray-800 min-w-[250px]`}>
           <div className="text-center">
             {(() => {
               const countryInfo = countryData.find(c =>
@@ -881,7 +870,6 @@ export function DraggableGlobe() {
                         alt={`${countryInfo.country_name} flag`}
                         className="w-8 h-6 rounded-sm shadow-sm"
                         onError={(e) => {
-                          // Hide flag if it fails to load
                           e.currentTarget.style.display = 'none'
                         }}
                       />
@@ -912,11 +900,13 @@ export function DraggableGlobe() {
       )}
 
       {/* Interactive instructions */}
-      <div className="absolute top-24 left-1/2 transform -translate-x-1/2">
-        <div className="text-sm text-gray-400 bg-black/80 backdrop-blur-sm px-4 py-2 rounded-full border border-gray-800 text-center">
-          🌍 Drag to rotate • Hover countries & markers • Use filters above
+      {showInstructions && (
+        <div className="absolute top-24 left-1/2 transform -translate-x-1/2">
+          <div className="text-sm text-gray-400 bg-black/80 backdrop-blur-sm px-4 py-2 rounded-full border border-gray-800 text-center">
+            🌍 Drag to rotate • Hover countries & markers • Use filters above
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
