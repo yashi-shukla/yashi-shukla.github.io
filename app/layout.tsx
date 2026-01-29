@@ -39,10 +39,46 @@ const inter = Inter({
   display: "swap",
 });
 
+const siteUrl = "https://yashi-shukla.github.io";
+const title = "Yashi Shukla - Data Engineer & AI Specialist";
+const description =
+  "Empowering positive change through data, AI & cloud engineering. 5+ years building scalable solutions for governments, nonprofits, and enterprises worldwide.";
+
 export const metadata: Metadata = {
-  title: "Yashi Shukla - Data Engineer & AI Specialist",
-  description: "Empowering positive change through data, AI & cloud engineering. 5+ years building scalable solutions for governments, nonprofits, and enterprises worldwide.",
-  keywords: ["data engineer", "AI specialist", "machine learning", "cloud solutions", "LLM", "GenAI", "portfolio"],
+  metadataBase: new URL(siteUrl),
+  title,
+  description,
+  keywords: [
+    "data engineer",
+    "AI specialist",
+    "machine learning",
+    "cloud solutions",
+    "LLM",
+    "GenAI",
+    "portfolio",
+    "Yashi Shukla",
+  ],
+  creator: "Yashi Shukla",
+  openGraph: {
+    title,
+    description,
+    url: siteUrl,
+    siteName: "Yashi Shukla",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title,
+    description,
+  },
+  alternates: {
+    canonical: siteUrl,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
@@ -57,9 +93,9 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <SmoothScroll>
-            <div className="flex flex-col min-h-screen w-full">
+            <main className="flex flex-col min-h-screen w-full">
               {children}
-            </div>
+            </main>
           </SmoothScroll>
         </ThemeProvider>
       </body>

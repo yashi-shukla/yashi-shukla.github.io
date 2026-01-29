@@ -1,7 +1,26 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { Mail, MapPin, Linkedin, Github, Menu, X, ChevronDown } from 'lucide-react'
+import { Mail, Linkedin, Github, Menu, X, ChevronDown } from 'lucide-react'
+
+// Brand SVG icons not available in Lucide
+const TableauIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M11.654 0v2.406h-2.36v1.17h2.36v2.468h1.18V3.576h2.36V2.406h-2.36V0h-1.18zm-4.18 4.404V7.69H4.66v1.18h2.814v3.25h1.18v-3.25h2.814V7.69H8.654V4.404h-1.18zm8.588 0V7.69h-2.814v1.18h2.814v3.25h1.18v-3.25h2.814V7.69h-2.814V4.404h-1.18zM11.654 8.84v3.286h-2.36v1.18h2.36v3.286h1.18v-3.286h2.36v-1.18h-2.36V8.84h-1.18zm-8.41 4.368v2.406H0v1.18h3.244v2.406h1.18v-2.406h3.244v-1.18H4.424v-2.406h-1.18zm16.77 0v2.406h-3.244v1.18h3.244v2.406h1.18v-2.406H24v-1.18h-3.006v-2.406h-1.18zm-8.36 4.38v3.286h-2.36v1.18h2.36V24h1.18v-2.146h2.36v-1.18h-2.36v-3.286h-1.18z"/>
+  </svg>
+)
+
+const SubstackIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M22.539 8.242H1.46V5.406h21.08v2.836zM1.46 10.812V24l9.6-5.244 9.6 5.244V10.812H1.46zM22.54 0H1.46v2.836h21.08V0z"/>
+  </svg>
+)
+
+const MediumIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M13.54 12a6.8 6.8 0 01-6.77 6.82A6.8 6.8 0 010 12a6.8 6.8 0 016.77-6.82A6.8 6.8 0 0113.54 12zm7.42 0c0 3.54-1.51 6.42-3.38 6.42-1.87 0-3.39-2.88-3.39-6.42s1.52-6.42 3.39-6.42 3.38 2.88 3.38 6.42M24 12c0 3.17-.53 5.75-1.19 5.75-.66 0-1.19-2.58-1.19-5.75s.53-5.75 1.19-5.75C23.47 6.25 24 8.83 24 12z"/>
+  </svg>
+)
 import { DraggableGlobe } from '@/components/draggable-globe'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -118,8 +137,40 @@ export default function Page() {
     document.getElementById('explore')?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: "Yashi Shukla",
+    jobTitle: "Data Engineer & AI Specialist",
+    url: "https://yashi-shukla.github.io",
+    sameAs: [
+      "https://linkedin.com/in/yashi-shukla",
+      "https://github.com/yashi-shukla",
+    ],
+    knowsAbout: [
+      "Data Engineering",
+      "Artificial Intelligence",
+      "Machine Learning",
+      "Cloud Architecture",
+      "LLM Pipelines",
+      "Python",
+      "GCP",
+      "AWS",
+      "Azure",
+    ],
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "New Delhi",
+      addressCountry: "India",
+    },
+  }
+
   return (
     <div ref={mainRef} className="min-h-screen bg-background text-foreground">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Navigation - Minimal */}
       <nav className="fixed top-0 w-full bg-background/80 backdrop-blur-md z-50 border-b border-border/40">
         <div className="container-custom">
@@ -192,7 +243,7 @@ export default function Page() {
             {/* Subtitle */}
             <p className="hero-line text-fluid-lg text-muted-foreground max-w-xl mb-10 leading-relaxed">
               Building cloud-native systems, LLM workflows, and analytics solutions
-              for governments and global development organizations.
+              for private and global development organizations.
             </p>
 
           </div>
@@ -312,7 +363,7 @@ export default function Page() {
               Featured Projects
             </h2>
             <p className="text-fluid-base text-muted-foreground max-w-2xl mx-auto">
-              Real-world impact across governments, multilateral agencies, and nonprofits.
+              Real-world impact across government, nonprofit, and private sector projects.
             </p>
           </div>
 
@@ -409,10 +460,12 @@ export default function Page() {
 
                 <div className="space-y-4">
                   {[
-                    { icon: MapPin, label: 'New Delhi, India' },
                     { icon: Mail, label: 'yashishkl1@gmail.com', href: 'mailto:yashishkl1@gmail.com' },
-                    { icon: Linkedin, label: 'linkedin.com/in/yashi-shukla', href: 'https://linkedin.com/in/yashi-shukla' },
-                    { icon: Github, label: 'github.com/yashi-shukla', href: 'https://github.com/yashi-shukla' },
+                    { icon: Linkedin, label: 'LinkedIn', href: 'https://linkedin.com/in/yashi-shukla' },
+                    { icon: Github, label: 'GitHub', href: 'https://github.com/yashi-shukla' },
+                    { icon: TableauIcon, label: 'Tableau Public', href: 'https://public.tableau.com/app/profile/yashishukla/' },
+                    { icon: SubstackIcon, label: 'Substack', href: 'https://substack.com/@yashishukla' },
+                    { icon: MediumIcon, label: 'Medium', href: 'https://medium.com/@yashi.shukla' },
                   ].map(({ icon: Icon, label, href }) => (
                     <div key={label} className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
@@ -436,7 +489,7 @@ export default function Page() {
               </div>
 
               {/* Contact Form */}
-              <Card className="card-reveal border-0 shadow-sm">
+              <Card className="card-reveal border-0 shadow-sm bg-background">
                 <CardHeader>
                   <CardTitle className="text-lg">Send a Message</CardTitle>
                 </CardHeader>
